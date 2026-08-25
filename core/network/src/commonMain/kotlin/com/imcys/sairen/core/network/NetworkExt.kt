@@ -7,12 +7,18 @@ import com.tencent.kuikly.core.module.NetworkModule
 import com.tencent.kuikly.core.nvi.serialization.json.JSONObject
 import com.tencent.kuikly.core.pager.PageData
 import com.tencent.kuikly.core.pager.Pager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
 
 const val SR_NETWORK_TAG = "SRNetwork"
 
@@ -89,18 +95,27 @@ typealias FlowNetWorkResult<Data> = Flow<NetWorkResult<Data>>
 inline fun <reified Body, reified Data> Pager.srRequest(
     url: String,
     param: Data? = null,
-    isPost: Boolean = false
+    isPost: Boolean = false,
+    packagingBody: Boolean = false
 ) =
     callbackFlow<NetWorkResult<Body>> {
         trySend(NetWorkResult.Loading())
         val bodyJson = param?.let { json.encodeToString(param) } ?: "{}"
         val body = JSONObject(bodyJson)
-        KLog.i(SR_NETWORK_TAG, "srRequest url=$url isPost=$isPost param=$bodyJson")
+
+        val requestLog = if (isPost) {
+            "srRequest url=$url isPost=true body=$bodyJson"
+        } else {
+            val query = body.keys().asSequence()
+                .joinToString("&") { key -> "$key=${body.opt(key)}" }
+            "srRequest url=$url${if (query.isEmpty()) "" else "?$query"} isPost=false"
+        }
+        KLog.i(SR_NETWORK_TAG, requestLog)
 
         val handlersJson = JSONObject(
             json.encodeToString(
                 mapOf(
-                    "user-agent" to "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0"
+                    "user-agent" to "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
                 )
             )
         )
@@ -112,7 +127,11 @@ inline fun <reified Body, reified Data> Pager.srRequest(
         ) { data, success, errorMsg, response ->
             if (success) {
                 try {
-                    val responseBodyJsonStr = data.toString()
+                    val responseBodyJsonStr = if (packagingBody) {
+                        """
+                            {"data":${data.optString("data")}}
+                        """.trimIndent()
+                    } else data.toString()
                     val responseObject =
                         json.decodeFromString<ApiResponse<Body>>(responseBodyJsonStr)
                     trySend(
@@ -122,7 +141,10 @@ inline fun <reified Body, reified Data> Pager.srRequest(
                         )
                     )
                 } catch (e: Exception) {
-                    KLog.i(SR_NETWORK_TAG, "响应解析失败: ${e.message}")
+                    KLog.e(
+                        SR_NETWORK_TAG,
+                        "响应解析失败 url=$url body=${data.toString().take(300)} err=${e.message}"
+                    )
                     trySend(
                         NetWorkResult.Error<Body>(
                             data = null,
@@ -134,6 +156,7 @@ inline fun <reified Body, reified Data> Pager.srRequest(
                     close()
                 }
             } else {
+                KLog.e(SR_NETWORK_TAG, "请求失败 url=$url error=$errorMsg")
                 trySend(
                     NetWorkResult.Error<Body>(
                         data = null,
@@ -145,7 +168,7 @@ inline fun <reified Body, reified Data> Pager.srRequest(
             }
         }
         awaitClose { }
-    }
+    }.flowOn(Dispatchers.Unconfined)
 
 
 fun <T, R> NetWorkResult<T>.mapData(transform: (T?, ApiResponse<T?>?) -> R?): NetWorkResult<R> {
@@ -173,11 +196,11 @@ fun <T, R> NetWorkResult<T>.mapData(transform: (T?, ApiResponse<T?>?) -> R?): Ne
 inline fun <reified T : SRModel> T.toKJSONObject(): JSONObject {
     return JSONObject(json.encodeToString<T>(this))
 }
+
 inline fun <reified T : SRModel> JSONObject.toModel(): T {
     return json.decodeFromString(this.toString())
 }
+
 inline fun <reified T : SRModel> PageData.toModel(): T {
     return json.decodeFromString(this.params.toString())
 }
-
-

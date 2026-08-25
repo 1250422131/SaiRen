@@ -8,6 +8,7 @@
   "dependencies": {
     "@kuikly-open/render": '2.7.0',
     "@ohos/apng": "^1.0.0-rc.8",
+    "@kuiklybase/knoi": "0.0.4",
     "@kuiklybase/timezone": "0.0.1",
     "libentry.so": "file:./src/main/cpp/types/libentry"
   }

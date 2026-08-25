@@ -171,7 +171,7 @@ internal class StockListView : ComposeView<StockListViewAttr, StockListViewEvent
                 }
                 View {
                     attr {
-                        flex(1.2f)
+                        flex(1.4f)
                         padding(left = 4f)
                         overflow(true)
                     }
@@ -295,7 +295,7 @@ internal class StockListView : ComposeView<StockListViewAttr, StockListViewEvent
                         }
                         View {
                             attr {
-                                flex(1.2f)
+                                flex(1.4f)
                                 padding(left = 4f, right = 8f, top = 10f, bottom = 10f)
                                 overflow(true)
                             }

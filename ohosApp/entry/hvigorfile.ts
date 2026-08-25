@@ -3,5 +3,5 @@ import { kuiklyCompilePlugin, kuiklyCopyAssetsPlugin } from 'kuikly-ohos-compile
 
 export default {
     system: hapTasks,  /* Built-in plugin of Hvigor. It cannot be modified. */
-    plugins:[kuiklyCompilePlugin()]         /* Custom plugin to extend the functionality of Hvigor. */
+    plugins:[kuiklyCompilePlugin(), kuiklyCopyAssetsPlugin()]         /* Custom plugin to extend the functionality of Hvigor. */
 }

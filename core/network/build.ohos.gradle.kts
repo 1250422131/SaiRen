@@ -29,8 +29,8 @@ kotlin {
                 api(project(":core:common"))
 
                 // kotlinx.serialization（KuiklyBase 平台补丁版，来自 maven-tencent 仓库）
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${Version.getKotlinxSerializationVersion()}")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Version.getKotlinxSerializationVersion()}")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-core:${Version.getKotlinxSerializationVersion()}")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-json:${Version.getKotlinxSerializationVersion()}")
             }
         }
         val commonTest by getting {

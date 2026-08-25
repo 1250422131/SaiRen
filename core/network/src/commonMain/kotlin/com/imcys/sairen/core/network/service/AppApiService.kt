@@ -1,6 +1,8 @@
 package com.imcys.sairen.core.network.service
 
 import com.imcys.sairen.core.network.FlowNetWorkResult
+import com.imcys.sairen.core.network.model.SinaKLinePoint
+import com.imcys.sairen.core.network.model.SinaMinlinePoint
 import com.imcys.sairen.core.network.model.StockDetail
 import com.imcys.sairen.core.network.model.Stock
 import com.imcys.sairen.core.network.model.StockList
@@ -11,7 +13,16 @@ import com.tencent.kuikly.core.pager.Pager
 
 object AppApiService {
 
+    /** 东财实时/延时行情（股票列表、详情等实时类接口） */
     const val BASE_URL = "https://push2delay.eastmoney.com/api"
+
+    /** 新浪历史 K 线接口（图表数据源：五日/日/周/月K），返回顶层 JSON 数组 */
+    const val SINA_KLINE_URL =
+        "https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData"
+
+    /** 新浪当日分时接口（1 分钟线），返回顶层 JSON 数组 */
+    const val SINA_MINLINE_URL =
+        "https://quotes.sina.cn/cn/api/json_v2.php/CN_MinlineService.getMinlineData"
 
 
 
@@ -61,4 +72,38 @@ object AppApiService {
                 "fields" to fields,
             )
         )
+
+    /**
+     * 新浪历史 K 线（图表数据源：五日/日/周/月K）。
+     * [symbol] 为新浪格式（如 "sh600519"），[scale] 单位为分钟：
+     * 5=5 分钟线（五日）、240=日K、1200=周K（按周聚合）、7200=月K（按自然月聚合）。
+     * 数据不复权，字段见 [SinaKLinePoint]。
+     */
+    fun getStockKLine(
+        pager: Pager,
+        symbol: String,
+        scale: Int,
+        datalen: Int = 120,
+    ): FlowNetWorkResult<List<SinaKLinePoint>> = pager.srRequest(
+        SINA_KLINE_URL, param = mapOf(
+            "symbol" to symbol,
+            "scale" to scale.toString(),
+            "ma" to "no",
+            "datalen" to datalen.toString(),
+        ), packagingBody = true
+    )
+
+    /**
+     * 新浪当日分时（1 分钟线，含 09:25 集合竞价点与均价）。
+     * [symbol] 为新浪格式（如 "sh600519"）。
+     */
+    fun getStockMinline(
+        pager: Pager,
+        symbol: String,
+    ): FlowNetWorkResult<List<SinaMinlinePoint>> = pager.srRequest(
+        SINA_MINLINE_URL, param = mapOf(
+            "symbol" to symbol,
+            "dpc" to "1",
+        ), packagingBody = true
+    )
 }

@@ -3,8 +3,6 @@ import hilog from '@ohos.hilog';
 import UIAbility from '@ohos.app.ability.UIAbility';
 import Want from '@ohos.app.ability.Want';
 import window from '@ohos.window';
-// kotlinx-datetime（KuiklyBase KBA 版）在 OpenHarmony 上的时区数据源，
-// 必须在任何 datetime 调用前导入，否则运行时崩溃
 import '@kuiklybase/timezone';
 import { KuiklyRenderAdapterManager } from '@kuikly-open/render';
 import { LogAdapter } from '../kuikly/adapter/LogAdapter';

@@ -62,3 +62,16 @@ enum class StockCategory(
 
 /** 将列表接口返回的市场号和证券代码转换为详情接口所需的 `secid`。 */
 fun Stock.toEastMoneySecId(): String = "$eastMoneyMarketCode.$code"
+fun StockDetail.toEastMoneySecId(): String = "$eastMoneyMarketCode.$code"
+
+/**
+ * 转换为新浪行情接口的 `symbol`（如 "sh600519"/"sz000001"/"bj430047"）。
+ * 当前股票列表仅拉取 A 股，港股按新浪格式加 hk 前缀兜底；美股新浪格式特殊，原样返回代码。
+ */
+fun Stock.toSinaSymbol(): String = when (market) {
+    StockMarket.SHANGHAI -> "sh$code"
+    StockMarket.SHENZHEN -> "sz$code"
+    StockMarket.BEIJING -> "bj$code"
+    StockMarket.HONG_KONG -> "hk$code"
+    null, StockMarket.NASDAQ, StockMarket.NEW_YORK, StockMarket.AMERICAN -> code
+}

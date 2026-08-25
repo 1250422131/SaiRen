@@ -7,6 +7,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("maven-publish")
     id("com.tencent.kuikly-open.kuikly")
+    kotlin("plugin.serialization")
 
 }
 
@@ -60,6 +61,7 @@ kotlin {
             dependencies {
                 implementation(project(":core:chart"))
                 implementation(project(":core:network"))
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${Version.getKotlinxSerializationVersion()}")
 
             }
         }

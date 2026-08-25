@@ -4,6 +4,8 @@ plugins {
     id("com.android.library")
     id("com.google.devtools.ksp")
     id("maven-publish")
+    id("com.tencent.kuiklybase.knoi.plugin")
+    kotlin("plugin.serialization")
 
 }
 
@@ -137,4 +139,8 @@ fun getCommonCompilerArgs(): List<String> {
 
 fun getLinkerArgs(): List<String> {
     return listOf()
+}
+
+knoi {
+    tsGenDir = rootDir.resolve("ohosApp/entry/src/main/ets/knoi").absolutePath
 }
