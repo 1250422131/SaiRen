@@ -96,6 +96,7 @@ internal class StockAIProposalView :
 
                         SRButton {
                             attr {
+                                text = "重试"
                                 marginTop(10f)
                             }
                             event {

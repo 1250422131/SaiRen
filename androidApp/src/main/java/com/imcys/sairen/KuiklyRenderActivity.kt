@@ -1,5 +1,6 @@
 package com.imcys.sairen
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -13,6 +14,9 @@ import android.view.Window
 import android.view.WindowInsetsController
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.imcys.sairen.adapter.KRCoilImageAdapter
 import com.tencent.kuikly.core.render.android.IKuiklyRenderExport
@@ -56,7 +60,15 @@ class KuiklyRenderActivity : AppCompatActivity(), KuiklyRenderViewBaseDelegatorD
         setContentView(R.layout.activity_hr)
         initKuiklyAdapter()
         setupImmersiveMode()
+        // 确保输入法弹出时窗口重新测量，避免对话页底部输入框被键盘遮挡。
+        window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         hrContainerView = findViewById(R.id.hr_container)
+        ViewCompat.setOnApplyWindowInsetsListener(hrContainerView) { view, insets ->
+            val imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+            view.updatePadding(bottom = imeBottom)
+            insets
+        }
+        ViewCompat.requestApplyInsets(hrContainerView)
         loadingView = findViewById(R.id.hr_loading)
         errorView = findViewById(R.id.hr_error)
         kuiklyRenderViewDelegator.onAttach(hrContainerView, "", pageName, createPageData())
@@ -148,7 +160,12 @@ class KuiklyRenderActivity : AppCompatActivity(), KuiklyRenderViewBaseDelegatorD
             window.isNavigationBarContrastEnforced = false
         }
 
-        setSystemBarIconAppearance(window, !isSystemInNightMode())
+        setSystemBarIconAppearance(window, !isEffectiveNightMode())
+    }
+
+    /** 以 APP 内「外观」设置为准；未设置过则跟随系统 */
+    private fun isEffectiveNightMode(): Boolean {
+        return appForcedNightMode ?: isSystemInNightMode()
     }
 
     private fun setDecorFitsSystemWindows(window: Window) {
@@ -227,6 +244,40 @@ class KuiklyRenderActivity : AppCompatActivity(), KuiklyRenderViewBaseDelegatorD
         private const val KEY_PAGE_DATA = "pageData"
         private const val KEY_IS_NIGHT_MODE = "isNightMode"
         private const val EVENT_THEME_DID_CHANGED = "themeDidChanged"
+
+        /**
+         * APP 内「外观」设置生效的深浅色；由 Kuikly 侧 setAppNightMode 写入。
+         * null 表示还没设置过，此时跟随系统。
+         */
+        private var appForcedNightMode: Boolean? = null
+
+        /**
+         * Kuikly 侧切换主题后即时刷新系统栏图标明暗。
+         *
+         * 背景：强制暗色（而系统仍是亮色）时，系统栏图标需要跟着反色，否则状态栏会「看不见」。
+         */
+        fun refreshSystemBarAppearance(activity: Activity?, isNightMode: Boolean) {
+            appForcedNightMode = isNightMode
+            val window = activity?.window ?: return
+            val appearance = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
+                WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                window.insetsController?.setSystemBarsAppearance(
+                    if (isNightMode) 0 else appearance,
+                    appearance,
+                )
+                return
+            }
+            var flags = window.decorView.systemUiVisibility
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                flags = if (isNightMode) {
+                    flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+                } else {
+                    flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                }
+            }
+            window.decorView.systemUiVisibility = flags
+        }
 
         fun start(context: Context, pageName: String, pageData: JSONObject) {
             val starter = Intent(context, KuiklyRenderActivity::class.java)

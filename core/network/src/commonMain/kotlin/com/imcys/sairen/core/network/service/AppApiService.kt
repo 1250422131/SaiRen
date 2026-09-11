@@ -1,6 +1,7 @@
 package com.imcys.sairen.core.network.service
 
 import com.imcys.sairen.core.common.auth.AuthPreferences
+import com.imcys.sairen.core.common.config.ServerPreferences
 import com.imcys.sairen.core.common.ext.acquireSharedPreferencesModule
 import com.imcys.sairen.core.network.FlowNetWorkResult
 import com.imcys.sairen.core.network.model.AuthCredentials
@@ -14,9 +15,9 @@ import com.imcys.sairen.core.network.model.StockCompanyProfile
 import com.imcys.sairen.core.network.model.StockDetail
 import com.imcys.sairen.core.network.model.StockAiAnalysisJob
 import com.imcys.sairen.core.network.model.StockAiAnalysisRequest
-import com.imcys.sairen.core.network.model.Stock
 import com.imcys.sairen.core.network.model.StockList
-import com.imcys.sairen.core.network.model.toEastMoneySecId
+import com.imcys.sairen.core.network.model.Stock
+import com.imcys.sairen.core.network.model.StockSuggestTable
 import com.imcys.sairen.core.network.retryChatTransport
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -26,7 +27,15 @@ import com.tencent.kuikly.core.pager.Pager
 
 object AppApiService {
 
-    var aiAnalysisBaseUrl: String = "http://10.15.0.190:8017"
+    /**
+     * 塞壬后台地址：从本地持久化配置读取（「配置」页可修改），
+     * 未配置时回落到 [ServerPreferences.DEFAULT_BASE_URL]。
+     */
+    fun aiAnalysisBaseUrl(pager: Pager): String {
+        val saved = pager.acquireSharedPreferencesModule()
+            .getString(ServerPreferences.SERVER_BASE_URL)
+        return saved.ifBlank { ServerPreferences.DEFAULT_BASE_URL }
+    }
 
     /** 东财实时/延时行情（股票列表、详情等实时类接口） */
     const val BASE_URL = "https://push2delay.eastmoney.com/api"
@@ -42,6 +51,10 @@ object AppApiService {
     /** 东方财富 A 股 F10 公司资料接口。 */
     const val EAST_MONEY_COMPANY_PROFILE_URL =
         "https://emweb.securities.eastmoney.com/PC_HSF10/CompanySurvey/CompanySurveyAjax"
+
+    /** 东方财富股票搜索建议接口。 */
+    const val EAST_MONEY_SUGGEST_URL =
+        "https://searchapi.eastmoney.com/api/suggest/get"
 
 
 
@@ -71,26 +84,36 @@ object AppApiService {
             )
         )
 
-    /**
-     * 获取股票实时详情。
-     *
-     * [stock] 来自股票列表接口，使用其中的东财市场号和股票代码生成 `secid`。
-     */
+    /** 根据股票名称、代码或拼音获取东方财富搜索建议。 */
+    fun getStockSuggest(
+        pager: Pager,
+        input: String,
+    ): FlowNetWorkResult<StockSuggestTable> = pager.srRequest(
+        EAST_MONEY_SUGGEST_URL,
+        param = mapOf(
+            "input" to input,
+            "count" to "10",
+            "type" to "14",
+        ),
+        responseDataKey = "QuotationCodeTable",
+    )
+
     fun getStockDetail(
         pager: Pager,
-        stock: Stock,
-        fltt: Int = 2,
-        invt: Int = 2,
+        code: String,
+        marketCode: String,
         fields: String = "f43,f44,f45,f46,f47,f48,f57,f58,f60,f107,f116,f117,f168,f169,f170",
-    ): FlowNetWorkResult<StockDetail> =
-        pager.srRequest(
-            "$BASE_URL/qt/stock/get", param = mapOf(
-                "secid" to stock.toEastMoneySecId(),
-                "fltt" to fltt.toString(),
-                "invt" to invt.toString(),
-                "fields" to fields,
-            )
+    ): FlowNetWorkResult<StockDetail> = pager.srRequest(
+        "$BASE_URL/qt/stock/get", param = mapOf(
+            "secid" to "$marketCode.$code",
+            "fltt" to "2",
+            "invt" to "2",
+            "fields" to fields,
         )
+    )
+
+    fun getStockDetail(pager: Pager, stock: Stock): FlowNetWorkResult<StockDetail> =
+        getStockDetail(pager, stock.code, stock.eastMoneyMarketCode)
 
     /**
      * 获取东方财富 F10 公司资料。
@@ -142,24 +165,25 @@ object AppApiService {
 
     fun createStockAiAnalysis(
         pager: Pager,
-        stock: Stock,
+        code: String,
+        marketCode: String,
     ): FlowNetWorkResult<StockAiAnalysisJob> = pager.srRequest(
-        url = "$aiAnalysisBaseUrl/v1/stock-analyses",
-        param = StockAiAnalysisRequest(
-            code = stock.code,
-            marketCode = stock.eastMoneyMarketCode,
-        ),
+        url = "${aiAnalysisBaseUrl(pager)}/v1/stock-analyses",
+        param = StockAiAnalysisRequest(code = code, marketCode = marketCode),
         isPost = true,
         timeoutSeconds = 130,
         requestHeaders = authenticatedHeaders(pager),
     )
+
+    fun createStockAiAnalysis(pager: Pager, stock: Stock): FlowNetWorkResult<StockAiAnalysisJob> =
+        createStockAiAnalysis(pager, stock.code, stock.eastMoneyMarketCode)
 
     fun login(
         pager: Pager,
         username: String,
         password: String,
     ): FlowNetWorkResult<AuthSession> = pager.srRequest(
-        url = "$aiAnalysisBaseUrl/v1/auth/login",
+        url = "${aiAnalysisBaseUrl(pager)}/v1/auth/login",
         param = AuthCredentials(username = username, password = password),
         isPost = true,
     )
@@ -169,7 +193,7 @@ object AppApiService {
         username: String,
         password: String,
     ): FlowNetWorkResult<AuthSession> = pager.srRequest(
-        url = "$aiAnalysisBaseUrl/v1/auth/register",
+        url = "${aiAnalysisBaseUrl(pager)}/v1/auth/register",
         param = AuthCredentials(username = username, password = password),
         isPost = true,
     )
@@ -179,7 +203,7 @@ object AppApiService {
         beforeId: Long? = null,
         limit: Int = 100,
     ): FlowNetWorkResult<ChatHistoryPage> = pager.srRequest(
-        url = "$aiAnalysisBaseUrl/v1/chat/history",
+        url = "${aiAnalysisBaseUrl(pager)}/v1/chat/history",
         param = buildMap {
             beforeId?.let { put("beforeId", it.toString()) }
             put("limit", limit.toString())
@@ -196,7 +220,7 @@ object AppApiService {
         val request = SendChatMessageRequest(content, Uuid.random().toString())
         return retryChatTransport {
             pager.srRequest(
-                url = "$aiAnalysisBaseUrl/v1/chat/messages",
+                url = "${aiAnalysisBaseUrl(pager)}/v1/chat/messages",
                 param = request,
                 isPost = true,
                 timeoutSeconds = 130,

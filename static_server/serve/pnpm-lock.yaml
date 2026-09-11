@@ -11,12 +11,15 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.7
         version: 1.19.17(hono@4.13.5)
+      '@neondatabase/serverless':
+        specifier: ^1.1.0
+        version: 1.1.0
       better-sqlite3:
         specifier: ^13.0.3
         version: 13.0.3
       drizzle-orm:
         specifier: ^0.45.1
-        version: 0.45.2(better-sqlite3@13.0.3)
+        version: 0.45.2(@neondatabase/serverless@1.1.0)(better-sqlite3@13.0.3)
       hono:
         specifier: ^4.11.10
         version: 4.13.5
@@ -34,6 +37,10 @@ packages:
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
+
+  '@neondatabase/serverless@1.1.0':
+    resolution: {integrity: sha512-r3ZZhRjEcfEdKIZnoB1RusNgvHuaBRqfCzV4Gi+5A9yUX0S4HTws/ASWqt13wL4y4I+0rqsWGdA2w7EQXHi3+Q==}
+    engines: {node: '>=19.0.0'}
 
   better-sqlite3@13.0.3:
     resolution: {integrity: sha512-RbOBxmLBG8uvFUc15X9+9SFemKcQ0WBuISBVkpuiaUB2qblC8UWlHEjdWVoZ8AdhSwmoEgsiXKfopX0CQxaACQ==}
@@ -168,12 +175,15 @@ snapshots:
     dependencies:
       hono: 4.13.5
 
+  '@neondatabase/serverless@1.1.0': {}
+
   better-sqlite3@13.0.3:
     dependencies:
       node-addon-api: 8.9.2
 
-  drizzle-orm@0.45.2(better-sqlite3@13.0.3):
+  drizzle-orm@0.45.2(@neondatabase/serverless@1.1.0)(better-sqlite3@13.0.3):
     optionalDependencies:
+      '@neondatabase/serverless': 1.1.0
       better-sqlite3: 13.0.3
 
   hono@4.13.5: {}

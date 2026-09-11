@@ -71,6 +71,10 @@ internal class SRAppTheme(
     private val dayPalette: SRColorPalette,
     private val nightPalette: SRColorPalette,
 ) {
+
+    /**
+     * 得到当前生效色板。
+     */
     fun colorPalette(isNightMode: Boolean): SRColorPalette {
         return if (isNightMode) nightPalette else dayPalette
     }

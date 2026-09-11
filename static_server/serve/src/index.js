@@ -6,8 +6,8 @@ import { authRouter } from './router/auth.js';
 import { chatRouter } from './router/chat.js';
 import { stockAnalysisRouter } from './router/stock-analysis.js';
 
-const port = readNumberEnv('PORT', 8017);
 const app = new Hono();
+export default app;
 
 app.get('/health', (context) => context.json(success({ status: 'ok' })));
 app.use('*', authMiddleware);
@@ -21,9 +21,12 @@ app.onError((error, context) => {
   return context.json(failure(50001, '服务内部错误。'), 500);
 });
 
-serve({ fetch: app.fetch, port }, () => {
-  console.log(`SaiRen AI analysis service is listening on http://localhost:${port}`);
-});
+if (process.env.VERCEL !== '1') {
+  const port = readNumberEnv('PORT', 8017);
+  serve({ fetch: app.fetch, port }, () => {
+    console.log(`SaiRen AI analysis service is listening on http://localhost:${port}`);
+  });
+}
 
 function readNumberEnv(name, fallback) {
   const value = Number(process.env[name]);

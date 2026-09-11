@@ -13,6 +13,17 @@ enum class StockMarket(
     AMERICAN("美国证券交易所"),
     ;
 
+    /** 东方财富市场号。 */
+    val eastMoneyMarketCode: String
+        get() = when (this) {
+            SHANGHAI -> "1"
+            SHENZHEN, BEIJING -> "0"
+            HONG_KONG -> "116"
+            NASDAQ -> "105"
+            NEW_YORK -> "106"
+            AMERICAN -> "107"
+        }
+
     fun category(stockCode: String): StockCategory = when (this) {
         SHANGHAI -> if (stockCode.startsWith("900")) StockCategory.B_SHARE else StockCategory.A_SHARE
         SHENZHEN -> if (stockCode.startsWith("2")) StockCategory.B_SHARE else StockCategory.A_SHARE
@@ -22,6 +33,15 @@ enum class StockMarket(
     }
 
     companion object {
+        /** 根据证券代码推断 A 股、北交所或港股市场。 */
+        fun fromStockCode(code: String): StockMarket? = when {
+            code.length == 5 && code.all { it.isDigit() } -> HONG_KONG
+            code.startsWith("6") -> SHANGHAI
+            code.startsWith("4") || code.startsWith("8") || code.startsWith("92") -> BEIJING
+            code.startsWith("0") || code.startsWith("2") || code.startsWith("3") -> SHENZHEN
+            else -> null
+        }
+
         fun fromEastMoneyMarketCode(
             marketCode: String,
             stockCode: String,
@@ -80,6 +100,23 @@ fun Stock.toEastMoneyF10Code(): String? = when (market) {
  * 当前股票列表仅拉取 A 股，港股按新浪格式加 hk 前缀兜底；美股新浪格式特殊，原样返回代码。
  */
 fun Stock.toSinaSymbol(): String = when (market) {
+    StockMarket.SHANGHAI -> "sh$code"
+    StockMarket.SHENZHEN -> "sz$code"
+    StockMarket.BEIJING -> "bj$code"
+    StockMarket.HONG_KONG -> "hk$code"
+    null, StockMarket.NASDAQ, StockMarket.NEW_YORK, StockMarket.AMERICAN -> code
+}
+
+/** 将详情接口返回的股票转换为东方财富 F10 接口代码。 */
+fun StockDetail.toEastMoneyF10Code(): String? = when (market) {
+    StockMarket.SHANGHAI -> "SH$code"
+    StockMarket.SHENZHEN -> "SZ$code"
+    StockMarket.BEIJING -> "BJ$code"
+    null, StockMarket.HONG_KONG, StockMarket.NASDAQ, StockMarket.NEW_YORK, StockMarket.AMERICAN -> null
+}
+
+/** 将详情接口返回的股票转换为新浪行情代码。 */
+fun StockDetail.toSinaSymbol(): String = when (market) {
     StockMarket.SHANGHAI -> "sh$code"
     StockMarket.SHENZHEN -> "sz$code"
     StockMarket.BEIJING -> "bj$code"

@@ -60,6 +60,7 @@ export function createChatGenerator({ apiKey, baseURL, model, timeout, marketDat
     let repairing = false;
     let toolRounds = 0;
     let emptyRetried = false;
+    let syntaxRetried = false;
     // 简单的“股票名 + 怎么样/行情”由服务端先搜索，防止历史错误回复
     // 让模型不调用工具就再次声称找不到股票。
     const namedQuery = question.trim().match(/^([\p{L}\p{N}.*-]{2,20}?)(?:股票)?(?:怎么样|行情|分析一下|分析)[？?。！!]?$/u)?.[1];
@@ -76,12 +77,13 @@ export function createChatGenerator({ apiKey, baseURL, model, timeout, marketDat
     }
 
     for (let round = 0; round < 6; round += 1) {
+      const allowTools = toolRounds < 3 && (!repairing || (syntaxRetried && !stocks.size));
       const completion = await openAIClient.chat.completions.create({
         model,
         temperature: 0.2,
         max_tokens: 4000,
-        ...(!emptyRetried ? { response_format: { type: 'json_object' } } : {}),
-        ...(!repairing && toolRounds < 3 ? { tools: [stockTool, ...(stockSearchProvider ? [searchTool] : [])],
+        ...(!emptyRetried && !syntaxRetried ? { response_format: { type: 'json_object' } } : {}),
+        ...(allowTools ? { tools: [stockTool, ...(stockSearchProvider ? [searchTool] : [])],
           tool_choice: requireQuote && toolRounds === 0
             ? { type: 'function', function: { name: 'get_stock_data' } } : 'auto' } : {}),
         messages,
@@ -95,7 +97,7 @@ export function createChatGenerator({ apiKey, baseURL, model, timeout, marketDat
           if (!message?.content?.trim()) {
             throw Object.assign(new Error('AI 未返回消息内容。'), { code: 'AI_EMPTY_RESPONSE' });
           }
-          const parsed = ChatContentPlanSchema.safeParse(normalizeStockReferences(parseJsonContent(message.content), stocks));
+          const parsed = ChatContentPlanSchema.safeParse(normalizeStockReferences(parseJsonContent(message.content, true), stocks));
           if (!parsed.success) {
             const error = new Error('AI 返回的消息内容格式不正确。');
             error.cause = parsed.error;
@@ -128,6 +130,7 @@ export function createChatGenerator({ apiKey, baseURL, model, timeout, marketDat
             completionTokens: completion.usage?.completion_tokens,
             repairAttempted: repairing,
             reason: error instanceof SyntaxError ? '无效 JSON' : error.message,
+            jsonError: error instanceof SyntaxError ? error.message : undefined,
           });
           if (choice?.finish_reason === 'content_filter') throw error;
           if (error.code === 'AI_EMPTY_RESPONSE') {
@@ -143,18 +146,24 @@ export function createChatGenerator({ apiKey, baseURL, model, timeout, marketDat
           }
           if (repairing) return invalidResponseFallback(stocks);
           repairing = true;
-          if (message?.content?.trim()) {
+          syntaxRetried = error instanceof SyntaxError;
+          // 不把无效 JSON 作为 assistant 示例再次喂给模型。
+          if (!syntaxRetried && message?.content?.trim()) {
             messages.push({ role: 'assistant', content: message.content });
           }
           messages.push({
             role: 'system',
-            content: `具体校验问题：${error.cause?.issues?.map(issue => `${issue.path.join('.')}: ${issue.message}`).join('; ') ?? error.message}。已成功查询的证券引用：${JSON.stringify([...stocks.keys()])}。marketCode 必须是字符串，不能是数字、交易所名称；不得生成未成功查询的股票卡片。\n` + '上一轮回答未满足格式或内容要求。现在不要调用工具，请基于已有对话和已获取的股票数据重新回答。只输出符合约定的完整 JSON 对象，不要代码围栏；股票回答必须包含 text/markdown 文字解读或 stock_trade_timing 买卖建议，不能只有行情或图表卡片。用户问怎么样、分析或买卖点位时，每只已查询股票必须有 stock_trade_timing 卡片，包含买入、卖出区间、依据和风险；不足以判断时区间写“暂不提供点位”，说明原因。文字应说明趋势、买入观察条件、卖出或减仓条件及风险；数据不足时明确说明，不编造价格区间。',
+            content: `具体校验问题：${error.cause?.issues?.map(issue => `${issue.path.join('.')}: ${issue.message}`).join('; ') ?? error.message}。已成功查询的证券引用：${JSON.stringify([...stocks.keys()])}。marketCode 必须是字符串，不能是数字、交易所名称；不得生成未成功查询的股票卡片。\n`
+              + (syntaxRetried && !stocks.size && toolRounds < 3
+                ? '上一轮格式异常。需要股票数据时先调用工具完成查询，再回答。'
+                : '上一轮回答未满足格式或内容要求。现在不要调用工具，请基于已有对话和已获取的股票数据重新回答。')
+              + '只输出符合约定的完整 JSON 对象，例如 {"contents":[{"type":"text","data":"具体回答"}]}，不要代码围栏；字符串中的换行和双引号必须转义，不能有尾随逗号。股票回答必须包含 text/markdown 文字解读或 stock_trade_timing 买卖建议，不能只有行情或图表卡片。用户问怎么样、分析或买卖点位时，每只已查询股票必须有 stock_trade_timing 卡片，包含买入、卖出区间、依据和风险；不足以判断时区间写“暂不提供点位”，说明原因。文字应说明趋势、买入观察条件、卖出或减仓条件及风险；数据不足时明确说明，不编造价格区间。',
           });
           continue;
         }
       }
 
-      if (repairing || toolRounds >= 3) throw new Error('AI 在最终回答阶段返回了工具调用。');
+      if (!allowTools) throw new Error('AI 在最终回答阶段返回了工具调用。');
       toolRounds += 1;
       messages.push(message);
       for (const call of message.tool_calls) {
@@ -277,7 +286,7 @@ function toModelMessage(message) {
     : content || '[结构化卡片]' };
 }
 
-function parseJsonContent(content) {
+function parseJsonContent(content, repairFormatting = false) {
   const normalized = content.trim();
   const fenced = normalized.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1]?.trim();
   const start = normalized.indexOf('{'), end = normalized.lastIndexOf('}');
@@ -286,8 +295,36 @@ function parseJsonContent(content) {
   for (const candidate of [normalized, fenced, embedded]) {
     if (!candidate) continue;
     try { return JSON.parse(candidate); } catch (cause) { error = cause; }
+    if (repairFormatting) {
+      try { return JSON.parse(repairJsonFormatting(candidate)); } catch { /* 交给模型重试，不补写缺失内容。 */ }
+    }
   }
   throw error ?? new SyntaxError('回答中没有有效 JSON。');
+}
+
+// 仅修复字符串内未转义的控制字符和字符串外的尾逗号，保留正文、价格及引用。
+function repairJsonFormatting(json) {
+  let result = '', inString = false, escaped = false;
+  for (let i = 0; i < json.length; i += 1) {
+    const char = json[i];
+    if (inString) {
+      if (escaped) {
+        result += char;
+        escaped = false;
+      } else if (char.charCodeAt(0) < 32) {
+        result += JSON.stringify(char).slice(1, -1);
+      } else {
+        result += char;
+        if (char === '\\') escaped = true;
+        else if (char === '"') inString = false;
+      }
+    } else {
+      if (char === ',' && /^\s*[}\]]/.test(json.slice(i + 1))) continue;
+      result += char;
+      if (char === '"') inString = true;
+    }
+  }
+  return result;
 }
 
 function normalizeStockReferences(plan, stocks) {

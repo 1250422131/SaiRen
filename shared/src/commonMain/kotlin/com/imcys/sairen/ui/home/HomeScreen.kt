@@ -1,5 +1,6 @@
 package com.imcys.sairen.ui.home
 
+import com.imcys.sairen.component.SRIcon
 import com.imcys.sairen.component.SRNavigationBar
 import com.imcys.sairen.component.SRPageList
 import com.imcys.sairen.component.SRPageListView
@@ -58,9 +59,20 @@ internal class HomeScreenView: ComposeView<HomeScreenViewAttr, HomeScreenViewEve
                                 }
                             }
                         }
-                        Image {
+                        SRIcon {
                             attr {
-                                size(24f,24f)
+                                src("search_24dp.svg".toCommonAssets())
+                                marginRight(5f)
+                                tintColor(Color(ctx.SRThemeColor.primary))
+                            }
+                            event {
+                                click {
+                                    ctx.acquireRouterModule().openPage("search")
+                                }
+                            }
+                        }
+                        SRIcon {
+                            attr {
                                 src("settings_24dp.svg".toCommonAssets())
                                 tintColor(Color(ctx.SRThemeColor.primary))
                             }

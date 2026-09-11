@@ -77,6 +77,10 @@ class KRBridgeModule : KuiklyRenderBaseModule() {
                 dateFormatter(params)
             }
 
+            "setAppNightMode" -> {
+                setAppNightMode(params)
+            }
+
             else -> callback?.invoke(
                 mapOf(
                     "code" to -1,
@@ -189,6 +193,14 @@ class KRBridgeModule : KuiklyRenderBaseModule() {
         val data = Date(paramJSONObject.optLong("timeStamp"))
         val format = SimpleDateFormat(paramJSONObject.optString("format"))
         return format.format(data)
+    }
+
+    /**
+     * Kuikly 侧「外观」设置生效后同步深浅色，用于刷新状态栏 / 导航栏图标明暗。
+     */
+    private fun setAppNightMode(params: String?) {
+        val isNightMode = JSONObject(params ?: "{}").optBoolean("isNightMode")
+        KuiklyRenderActivity.refreshSystemBarAppearance(activity, isNightMode)
     }
 
     companion object {

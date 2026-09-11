@@ -183,6 +183,13 @@ class BridgeModule : Module() {
         callNativeMethod("openApplySampleSuccessPage", methodArgs, null)
     }
 
+    // 同步 APP 生效的深浅色给宿主端，用于刷新状态栏/导航栏图标明暗
+    fun setAppNightMode(isNightMode: Boolean) {
+        val methodArgs = JSONObject()
+        methodArgs.put("isNightMode", isNightMode)
+        callNativeMethod(SET_APP_NIGHT_MODE, methodArgs, null)
+    }
+
     // 异步获取本地服务器时间戳
     fun localServeTime(cb: CallbackFn) {
         callNativeMethod(LOCAL_SERVE_TIME, null, cb)
@@ -342,6 +349,7 @@ class BridgeModule : Module() {
         const val OPEN_LINK = "openLink"
         const val CLOSE_PAGE = "closePage"
         const val LOG = "log"
+        const val SET_APP_NIGHT_MODE = "setAppNightMode"
         const val SSO_REQUEST = "ssoRequest"
         const val QQ_LIVE_SSO_REQUEST = "qqLiveSSORequest"
         const val REPORT_DT = "reportDT"

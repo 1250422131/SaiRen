@@ -29,7 +29,6 @@ import com.tencent.kuikly.core.views.View
 @Page("stock_detail")
 internal class StockDetailPage : BasePager() {
 
-    private lateinit var baseData: Stock
     private lateinit var store: StockDetailStore
 
     override fun body(): ViewBuilder {
@@ -150,8 +149,8 @@ internal class StockDetailPage : BasePager() {
 
     override fun created() {
         super.created()
-        baseData = pagerData.params.toModel<Stock>()
-        store = StockDetailStore(this, baseData)
+        val stock = pagerData.params.toModel<Stock>()
+        store = StockDetailStore(this, stock)
         store.dispatch(StockDetailIntent.Load)
     }
 

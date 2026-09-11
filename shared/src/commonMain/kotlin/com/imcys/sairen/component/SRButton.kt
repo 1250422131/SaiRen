@@ -34,7 +34,7 @@ internal class SRButtonView: ComposeView<SRButtonViewAttr, SRButtonViewEvent>() 
                 Text {
                     attr {
                         color(Color.WHITE)
-                        text("点点滴滴")
+                        text(ctx.attr.text)
                     }
                 }
 
@@ -45,7 +45,7 @@ internal class SRButtonView: ComposeView<SRButtonViewAttr, SRButtonViewEvent>() 
 
 
 internal class SRButtonViewAttr : ComposeAttr() {
-
+    var text: String = ""
 }
 
 internal class SRButtonViewEvent : ComposeEvent() {

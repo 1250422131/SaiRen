@@ -11,16 +11,18 @@ import com.tencent.kuikly.core.views.View
 
 /**
  * 带默认边框和圆角的卡片容器。
+ *
+ * 描边色必须在 attr 作用域内读取，否则切主题后不会刷新（attr 块只在依赖变化时重跑）。
  */
 internal fun ViewContainer<*, *>.SRCard(init: DivView.() -> Unit = {}) {
-    val themeColors = (getPager() as BasePager).SRThemeColor
+    val pager = getPager() as BasePager
     View {
         attr {
             border(
                 Border(
                     lineWidth = 1f,
                     lineStyle = BorderStyle.SOLID,
-                    color = Color(themeColors.divider),
+                    color = Color(pager.SRThemeColor.divider),
                 )
             )
             borderRadius(SRRadius.LARGE)

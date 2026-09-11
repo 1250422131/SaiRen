@@ -5,10 +5,12 @@ import com.imcys.sairen.core.network.NetWorkResult
 import com.imcys.sairen.core.network.emptyNetWorkResult
 import com.imcys.sairen.core.network.model.SinaKLinePoint
 import com.imcys.sairen.core.network.model.SinaMinlinePoint
-import com.imcys.sairen.core.network.model.Stock
 import com.imcys.sairen.core.network.model.StockCompanyProfile
 import com.imcys.sairen.core.network.model.StockDetail
 import com.imcys.sairen.core.network.model.StockAiAnalysisJob
+import com.imcys.sairen.core.network.model.Stock
+import com.imcys.sairen.core.network.model.toEastMoneyF10Code
+import com.imcys.sairen.core.network.model.toSinaSymbol
 import com.imcys.sairen.core.network.model.toEastMoneyF10Code
 import com.imcys.sairen.core.network.model.toSinaSymbol
 import com.imcys.sairen.core.network.service.AppApiService
@@ -58,14 +60,15 @@ internal class StockDetailStore(
             AppApiService.getStockDetail(pager, stock).collect { result ->
                 reduce { copy(detailResult = result) }
                 if (result is NetWorkResult.Success) {
+                    val f10Code = stock.toEastMoneyF10Code().orEmpty()
+                    if (f10Code.isNotBlank()) {
+                        AppApiService.getStockCompanyProfile(pager, f10Code).collect {
+                            reduce { copy(stockCompanyInfo = it) }
+                        }
+                    }
                     loadChart(stockChartTabList.first())
                     maybeRequestAiAnalysis()
                 }
-            }
-        }
-        pager.lifecycleScope.launch {
-            AppApiService.getStockCompanyProfile(pager,stock.toEastMoneyF10Code() ?: "").collect {
-                reduce { copy(stockCompanyInfo = it) }
             }
         }
     }

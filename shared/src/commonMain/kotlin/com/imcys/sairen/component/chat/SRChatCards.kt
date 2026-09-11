@@ -118,16 +118,10 @@ private fun ViewContainer<*, *>.QuoteValue(label: String, value: String) {
 }
 
 private fun ViewContainer<*, *>.openChatStockDetail(stock: ChatStockBasic) {
+    if (stock.code.isBlank()) return
     val marketCode = stock.marketCode.ifBlank {
-        // 兼容旧聊天记录。美股市场号无法由代码可靠推断，旧数据不猜交易所。
-        when {
-            stock.code.length == 5 && stock.code.all { it.isDigit() } -> "116"
-            stock.code.length == 6 && stock.code.all { it.isDigit() } ->
-                if (stock.code.startsWith("6")) "1" else "0"
-            else -> ""
-        }
+        if (stock.code.length == 5) "116" else if (stock.code.startsWith("6")) "1" else "0"
     }
-    if (marketCode.isBlank() || stock.code.isBlank()) return
     acquireRouterModule().openPage(
         "stock_detail",
         Stock(

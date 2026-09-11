@@ -17,9 +17,13 @@ export const AuthCredentialsSchema = z.object({
 
 /** 客户端只能提交证券标识；所有分析依据由服务端拉取。 */
 export const CreateAnalysisRequestSchema = z.object({
-  code: z.string().trim().regex(/^\d{5,8}$/, '证券代码格式不正确。'),
-  marketCode: z.enum(['0', '1']),
-}).strict();
+  code: z.string().trim().regex(/^[A-Z0-9][A-Z0-9.-]{0,19}$/, '证券代码格式不正确。'),
+  marketCode: z.enum(['0', '1', '116', '105', '106', '107']),
+}).strict().refine(({ code, marketCode }) => {
+  if (marketCode === '0' || marketCode === '1') return /^\d{6}$/.test(code);
+  if (marketCode === '116') return /^\d{5}$/.test(code);
+  return /^[A-Z][A-Z0-9.-]{0,19}$/.test(code);
+}, '证券代码与市场不匹配。');
 
 export const SendChatMessageRequestSchema = z.object({
   content: z.string().trim().min(1, '消息不能为空。').max(2000, '消息最多 2000 个字符。'),
