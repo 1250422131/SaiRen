@@ -47,8 +47,9 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":core:chart"))
-                implementation(project(":core:network"))
+                api(project(":core:chart"))
+                api(project(":core:network"))
+                implementation("com.tencent.kuiklybase:KuiklyMarkdown:1.0.6-2.0.21-ohos")
 
             }
         }

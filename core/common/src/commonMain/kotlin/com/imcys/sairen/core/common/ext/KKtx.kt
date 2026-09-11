@@ -1,11 +1,14 @@
 package com.imcys.sairen.core.common.ext
 
+import com.imcys.sairen.core.common.module.BridgeModule
 import com.tencent.kuikly.core.base.Attr
 import com.tencent.kuikly.core.base.DeclarativeBaseView
 import com.tencent.kuikly.core.base.attr.ImageUri
 import com.tencent.kuikly.core.base.event.Event
 import com.tencent.kuikly.core.module.NetworkModule
 import com.tencent.kuikly.core.module.RouterModule
+import com.tencent.kuikly.core.module.SharedPreferencesModule
+import com.tencent.kuikly.core.reactive.collection.ObservableList
 
 fun <A : Attr, E : Event> DeclarativeBaseView<A, E>.acquireRouterModule(): RouterModule {
     return acquireModule(RouterModule.MODULE_NAME)
@@ -15,6 +18,19 @@ fun <A : Attr, E : Event> DeclarativeBaseView<A, E>.acquireNetworkModule(): Netw
     return acquireModule(NetworkModule.MODULE_NAME)
 }
 
+fun <A : Attr, E : Event> DeclarativeBaseView<A, E>.acquireSharedPreferencesModule(): SharedPreferencesModule {
+    return acquireModule(SharedPreferencesModule.MODULE_NAME)
+}
+
+fun <A : Attr, E : Event> DeclarativeBaseView<A, E>.acquireBridgeModule(): BridgeModule {
+    return acquireModule(BridgeModule.MODULE_NAME)
+}
+
 fun String.toPageAssets() = ImageUri.pageAssets(this)
 
 fun String.toCommonAssets() = ImageUri.commonAssets(this)
+
+
+ fun <T> List<T>.toObservableList(): ObservableList<T> {
+    return ObservableList(toMutableList())
+}

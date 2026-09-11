@@ -14,6 +14,7 @@ import com.tencent.kuikly.core.base.attr.ImageUri
 import com.tencent.kuikly.core.views.Image
 import com.tencent.kuikly.core.views.Text
 import com.tencent.kuikly.core.views.View
+import com.tencent.kuikly.core.views.layout.Row
 
 internal class SRNavigationBarView :
     ComposeView<SRNavigationBarViewAttr, SRNavigationBarViewEvent>() {
@@ -39,8 +40,6 @@ internal class SRNavigationBarView :
                     attr {
                         flexDirectionRow()
                         padding(left = 20f, right = 20f, top = 10f, bottom = 10f)
-
-
                         justifyContentSpaceBetween()
                     }
 
@@ -49,17 +48,18 @@ internal class SRNavigationBarView :
                             flexDirectionRow()
                             alignItemsCenter()
                         }
-                        if (ctx.attr.enabledBack){
+                        if (ctx.attr.enabledBack) {
                             Image {
                                 attr {
                                     margin(right = 10f)
                                     size(25f, 25f)
-                                    src("arrow_back_24dp.png".toCommonAssets())
+                                    src("arrow_back_24dp.svg".toCommonAssets())
                                     tintColor(Color(ctx.SRThemeColor.primaryText))
                                 }
                                 event {
                                     click {
-                                        ctx.acquireRouterModule().closePage()
+                                        ctx.event.callBack?.invoke() ?: ctx.acquireRouterModule()
+                                            .closePage()
                                     }
                                 }
                             }
@@ -85,10 +85,8 @@ internal class SRNavigationBarView :
                         }
                     }
 
-                    View {
-                        attr {
-
-                        }
+                    Row {
+                        attr { alignItemsCenter() }
                         ctx.attr.action?.let { action ->
                             action()
                         }
@@ -115,7 +113,7 @@ internal class SRNavigationBarViewAttr : ComposeAttr() {
 
 
 internal class SRNavigationBarViewEvent : ComposeEvent() {
-
+    var callBack: (() -> Unit)? = null
 }
 
 internal fun ViewContainer<*, *>.SRNavigationBar(init: SRNavigationBarView.() -> Unit) {

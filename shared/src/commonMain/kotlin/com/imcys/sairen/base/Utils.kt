@@ -1,5 +1,6 @@
 package com.imcys.sairen.base
 
+import com.imcys.sairen.core.common.module.BridgeModule
 import com.tencent.kuikly.core.base.BaseObject
 import com.tencent.kuikly.core.manager.BridgeManager
 import com.tencent.kuikly.core.manager.PagerManager

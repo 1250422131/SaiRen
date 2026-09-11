@@ -65,6 +65,17 @@ fun Stock.toEastMoneySecId(): String = "$eastMoneyMarketCode.$code"
 fun StockDetail.toEastMoneySecId(): String = "$eastMoneyMarketCode.$code"
 
 /**
+ * 转换为东方财富 A 股 F10 公司资料接口的代码（例如 `SH600519`）。
+ * 港美股不使用此接口，返回 null。
+ */
+fun Stock.toEastMoneyF10Code(): String? = when (market) {
+    StockMarket.SHANGHAI -> "SH$code"
+    StockMarket.SHENZHEN -> "SZ$code"
+    StockMarket.BEIJING -> "BJ$code"
+    null, StockMarket.HONG_KONG, StockMarket.NASDAQ, StockMarket.NEW_YORK, StockMarket.AMERICAN -> null
+}
+
+/**
  * 转换为新浪行情接口的 `symbol`（如 "sh600519"/"sz000001"/"bj430047"）。
  * 当前股票列表仅拉取 A 股，港股按新浪格式加 hk 前缀兜底；美股新浪格式特殊，原样返回代码。
  */

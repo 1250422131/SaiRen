@@ -1,7 +1,6 @@
 package com.imcys.sairen.component
 
 import com.imcys.sairen.theme.SRThemeColor
-import com.imcys.sairen.theme.SRRadius
 import com.tencent.kuikly.core.base.ComposeView
 import com.tencent.kuikly.core.base.ComposeAttr
 import com.tencent.kuikly.core.base.ComposeEvent
@@ -45,11 +44,10 @@ internal class SRTabsView<T> : ComposeView<SRTabsViewAttr<T>, SRTabsViewEvent<T>
     override fun body(): ViewBuilder {
         val ctx = this
         return {
-            val colors = ctx.SRThemeColor
             Tabs {
                 attr {
                     indicatorAlignCenter()
-                    height(30f)
+                    height(50f)
                     defaultInitIndex(ctx.currentIndex)
                     ctx.scrollParamsState?.also {
                         scrollParams(it)
@@ -57,10 +55,10 @@ internal class SRTabsView<T> : ComposeView<SRTabsViewAttr<T>, SRTabsViewEvent<T>
                     indicatorInTabItem {
                         View {
                             attr {
-                                absolutePosition(left = 15f, right = 15f, bottom = 0f)
-                                height(4f)
-                                borderRadius(SRRadius.SMALL)
-                                backgroundColor(colors.tabIndicator)
+                                absolutePosition(left = 15f, right = 15f, bottom = 5f)
+                                height(6f)
+                                borderRadius(3f)
+                                backgroundColor(ctx.SRThemeColor.tabIndicator)
                             }
                         }
                     }
@@ -70,6 +68,7 @@ internal class SRTabsView<T> : ComposeView<SRTabsViewAttr<T>, SRTabsViewEvent<T>
                     TabItem { state ->
                         attr {
                             allCenter()
+                            padding(left = 12f, right = 8f)
                         }
                         event {
                             click {
@@ -80,10 +79,9 @@ internal class SRTabsView<T> : ComposeView<SRTabsViewAttr<T>, SRTabsViewEvent<T>
                         Text {
                             attr {
                                 fontWeightBold()
-                                margin(left = 12f, right = 8f)
                                 text(ctx.event.onTitle.invoke(tabItem))
                                 fontSize(17f)
-                                color(colors.primaryText)
+                                color(ctx.SRThemeColor.primaryText)
                             }
                         }
                     }

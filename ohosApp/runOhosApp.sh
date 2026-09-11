@@ -3,17 +3,37 @@
 set -e
 
 echo "working path: $(pwd)"
-pushd ohosApp
 SDK_HOME=/Applications/DevEco-Studio.app/Contents
 export DEVECO_SDK_HOME=$SDK_HOME/sdk
 export JAVA_HOME=$SDK_HOME/jbr/Contents/Home
 export PATH=$DEVECO_SDK_HOME:$SDK_HOME/jbr/Contents/Home/bin:$SDK_HOME/tools/node/bin:$SDK_HOME/tools/ohpm/bin:$SDK_HOME/tools/hvigor/bin:$PATH
 
+echo "build shared OHOS library"
+./gradlew -c settings.ohos.gradle.kts :shared:linkDebugSharedOhosArm64
+
+SHARED_SO=shared/build/bin/ohosArm64/debugShared/libshared.so
+SHARED_API=shared/build/bin/ohosArm64/debugShared/libshared_api.h
+ENTRY_SO=ohosApp/entry/libs/arm64-v8a/libshared.so
+ENTRY_API=ohosApp/entry/src/main/cpp/libshared_api.h
+if [ ! -f "$SHARED_SO" ] || [ ! -f "$SHARED_API" ]; then
+  echo "error: shared OHOS artifacts were not generated"
+  exit 3
+fi
+mkdir -p "$(dirname "$ENTRY_SO")"
+cp -f "$SHARED_SO" "$ENTRY_SO"
+cp -f "$SHARED_API" "$ENTRY_API"
+
+cd ohosApp
 $SDK_HOME/tools/ohpm/bin/ohpm install --all
 $SDK_HOME/tools/node/bin/node $SDK_HOME/tools/hvigor/bin/hvigorw.js --sync -p product=default --analyze=normal --parallel
 $SDK_HOME/tools/node/bin/node $SDK_HOME/tools/hvigor/bin/hvigorw.js --mode module -p module=entry@default -p product=default -p requiredDeviceType=phone assembleHap --analyze=normal --parallel
 
 HDC_BIN=$SDK_HOME/sdk/default/openharmony/toolchains/hdc
+BUNDLE_NAME=$(sed -n 's/.*"bundleName"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' AppScope/app.json5 | head -n 1)
+if [ -z "$BUNDLE_NAME" ]; then
+  echo "error: unable to read bundleName from AppScope/app.json5"
+  exit 4
+fi
 targets=$($HDC_BIN list targets)
 HAP_PATH=entry/build/default/outputs/default
 if [ -z "$targets" ]; then
@@ -25,8 +45,8 @@ elif [ -e "$HAP_PATH/entry-default-unsigned.hap" ] && [ ! -e "$HAP_PATH/entry-de
 else
   for target_id in $($HDC_BIN list targets); do
   echo "install to $target_id"
-  $HDC_BIN -t "$target_id" shell aa force-stop com.imcys.sairen
+  $HDC_BIN -t "$target_id" shell aa force-stop "$BUNDLE_NAME" || true
   $HDC_BIN -t "$target_id" install entry/build/default/outputs/default/entry-default-signed.hap
-  $HDC_BIN -t "$target_id" shell aa start -a EntryAbility -b com.imcys.sairen
+  $HDC_BIN -t "$target_id" shell aa start -a EntryAbility -b "$BUNDLE_NAME"
   done
 fi

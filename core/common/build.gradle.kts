@@ -106,3 +106,10 @@ android {
         targetSdk = 30
     }
 }
+
+// KBA datetime 的 JS 传递依赖指向未发布的 Kotlin dev 版本；JS bundle 使用项目 Kotlin 版本。
+configurations
+    .matching { it.name.startsWith("js") && it.name.endsWith("NpmAggregated") }
+    .configureEach {
+        resolutionStrategy.force("org.jetbrains.kotlin:kotlin-stdlib-common:2.1.21")
+    }

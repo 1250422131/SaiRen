@@ -1,6 +1,7 @@
 package com.imcys.sairen.core.network
 
 import com.imcys.sairen.core.common.ext.acquireNetworkModule
+import com.imcys.sairen.core.common.ext.sendLoginErrorEvent
 import com.imcys.sairen.core.network.model.SRModel
 import com.tencent.kuikly.core.log.KLog
 import com.tencent.kuikly.core.module.NetworkModule
@@ -96,7 +97,9 @@ inline fun <reified Body, reified Data> Pager.srRequest(
     url: String,
     param: Data? = null,
     isPost: Boolean = false,
-    packagingBody: Boolean = false
+    responseDataKey: String? = null,
+    timeoutSeconds: Int = 30,
+    requestHeaders: Map<String, String> = emptyMap(),
 ) =
     callbackFlow<NetWorkResult<Body>> {
         trySend(NetWorkResult.Loading())
@@ -112,34 +115,49 @@ inline fun <reified Body, reified Data> Pager.srRequest(
         }
         KLog.i(SR_NETWORK_TAG, requestLog)
 
-        val handlersJson = JSONObject(
-            json.encodeToString(
-                mapOf(
-                    "user-agent" to "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
-                )
-            )
+        val headers = mutableMapOf(
+            "user-agent" to "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
         )
+        if (isPost) headers["Content-Type"] = "application/json"
+        headers.putAll(requestHeaders)
+        val handlersJson = JSONObject(json.encodeToString(headers))
         acquireNetworkModule().httpRequest(
             url,
-            false,
+            isPost,
             param = body,
-            headers = handlersJson
+            headers = handlersJson,
+            timeout = timeoutSeconds,
         ) { data, success, errorMsg, response ->
             if (success) {
                 try {
-                    val responseBodyJsonStr = if (packagingBody) {
-                        """
-                            {"data":${data.optString("data")}}
+                    val responseBodyJsonStr = when {
+                        responseDataKey != null -> """
+                            {"data":${data.opt(responseDataKey)}}
                         """.trimIndent()
-                    } else data.toString()
+
+                        else -> data.toString()
+                    }
                     val responseObject =
                         json.decodeFromString<ApiResponse<Body>>(responseBodyJsonStr)
-                    trySend(
-                        NetWorkResult.Success(
-                            data = responseObject.data,
-                            responseData = responseObject,
+                    if (responseObject.code == 0) {
+                        trySend(
+                            NetWorkResult.Success(
+                                data = responseObject.data,
+                                responseData = responseObject,
+                            )
                         )
-                    )
+                    } else {
+                        if (responseObject.code == 4001) {
+                            sendLoginErrorEvent()
+                        }
+                        trySend(
+                            NetWorkResult.Error(
+                                data = null,
+                                responseData = responseObject,
+                                exception = responseObject.msg.ifBlank { "请求失败，错误码：${responseObject.code}" },
+                            )
+                        )
+                    }
                 } catch (e: Exception) {
                     KLog.e(
                         SR_NETWORK_TAG,
@@ -156,12 +174,22 @@ inline fun <reified Body, reified Data> Pager.srRequest(
                     close()
                 }
             } else {
-                KLog.e(SR_NETWORK_TAG, "请求失败 url=$url error=$errorMsg")
+                val errorResponse = runCatching {
+                    json.decodeFromString<ApiResponse<JsonElement>>(errorMsg)
+                }.getOrNull()
+                val dataCode = data.optInt("code").takeIf { it != 0 } ?: errorResponse?.code ?: 0
+                val responseError = data.optString("msg")
+                    .ifBlank { errorResponse?.msg.orEmpty() }
+                    .ifBlank { errorMsg }
+                if (dataCode == 4001) {
+                    sendLoginErrorEvent()
+                }
+                KLog.e(SR_NETWORK_TAG, "请求失败 dataCode=$dataCode url=$url error=$responseError")
                 trySend(
                     NetWorkResult.Error<Body>(
                         data = null,
                         responseData = null,
-                        exception = errorMsg
+                        exception = responseError
                     )
                 )
                 close()
@@ -179,6 +207,7 @@ fun <T, R> NetWorkResult<T>.mapData(transform: (T?, ApiResponse<T?>?) -> R?): Ne
                 ApiResponse<R>(
                     code = code,
                     data = transformedData,
+                    msg = msg,
                 )
             }
             NetWorkResult.Success<R>(transformedData, newResponse)

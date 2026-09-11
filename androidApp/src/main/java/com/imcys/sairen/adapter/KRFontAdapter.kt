@@ -12,6 +12,13 @@ object KRFontAdapter : IKRFontAdapter {
         } else {
             var tfe: Typeface? = null
             when (fontFamily) {
+                // 安卓加粗走描边
+                "MiSans-Bold","MiSans-Medium" -> {
+                    tfe = Typeface.createFromAsset(
+                        KRApplication.application.assets,
+                        "fonts/MiSans-Medium.ttf"
+                    )
+                }
                 "Qvideo Digit" -> {
                     tfe = Typeface.createFromAsset(
                         KRApplication.application.assets,

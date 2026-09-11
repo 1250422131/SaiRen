@@ -32,7 +32,6 @@ internal class SREqualTabsView<T> : ComposeView<SREqualTabsViewAttr<T>, SREqualT
     override fun body(): ViewBuilder {
         val ctx = this
         return {
-            val colors = ctx.SRThemeColor
             SRControlledTabs {
                 attr {
                     height(30f)
@@ -49,7 +48,7 @@ internal class SREqualTabsView<T> : ComposeView<SREqualTabsViewAttr<T>, SREqualT
                                     bottomLeft = 0f,
                                     bottomRight = 0f
                                 )
-                                backgroundColor(colors.tabIndicator)
+                                backgroundColor(ctx.SRThemeColor.tabIndicator)
                             }
                         }
                     }

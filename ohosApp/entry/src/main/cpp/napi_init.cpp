@@ -1,6 +1,5 @@
 #include "napi/native_api.h"
 #include "libshared_api.h"
-#include <hilog/log.h>
 
 static napi_value InitKuikly(napi_env env, napi_callback_info info) {
     auto api = libshared_symbols();
@@ -11,8 +10,7 @@ static napi_value InitKuikly(napi_env env, napi_callback_info info) {
 }
 
 EXTERN_C_START
-static napi_value Init(napi_env env, napi_value exports)
-{
+static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
         {"initKuikly", nullptr, InitKuikly, nullptr, nullptr, nullptr, napi_default, nullptr}
     };
@@ -21,17 +19,16 @@ static napi_value Init(napi_env env, napi_value exports)
 }
 EXTERN_C_END
 
-static napi_module demoModule = {
+static napi_module entry_module = {
     .nm_version = 1,
     .nm_flags = 0,
     .nm_filename = nullptr,
     .nm_register_func = Init,
-    .nm_modname = "entry",
-    .nm_priv = ((void*)0),
-    .reserved = { 0 },
+    .nm_modname = "kuikly_entry",
+    .nm_priv = static_cast<void *>(0),
+    .reserved = {0},
 };
 
-extern "C" __attribute__((constructor)) void RegisterEntryModule(void)
-{
-    napi_module_register(&demoModule);
+extern "C" __attribute__((constructor)) void RegisterKuiklyEntryModule(void) {
+    napi_module_register(&entry_module);
 }

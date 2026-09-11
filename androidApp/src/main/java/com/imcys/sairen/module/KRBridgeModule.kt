@@ -3,6 +3,9 @@ package com.imcys.sairen.module
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import com.tencent.kuikly.core.render.android.export.KuiklyRenderBaseModule
@@ -32,6 +35,10 @@ class KRBridgeModule : KuiklyRenderBaseModule() {
 
             "openPage" -> {
                 openPage(params)
+            }
+
+            "openLink" -> {
+                openLink(params)
             }
 
             "copyToPasteboard" -> {
@@ -124,6 +131,25 @@ class KRBridgeModule : KuiklyRenderBaseModule() {
         val ctx = context ?: return
         val paramJSON = JSONObject(params)
         val url = paramJSON.optString("url")
+    }
+
+    private fun openLink(params: String?) {
+        val rawUrl = JSONObject(params ?: "{}").optString("url").trim()
+        if (rawUrl.isEmpty()) {
+            return
+        }
+
+        val url = if (rawUrl.contains("://")) rawUrl else "https://$rawUrl"
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        val launchContext = activity ?: context ?: return
+        if (activity == null) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        try {
+            launchContext.startActivity(intent)
+        } catch (error: ActivityNotFoundException) {
+            Log.e("KuiklyRender", "No activity found to open link: $url", error)
+        }
     }
 
     private fun closePage(params: String?) {

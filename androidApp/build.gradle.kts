@@ -52,4 +52,11 @@ dependencies {
     // kotlinx-datetime KBA 版在 Android 上依赖 threetenabp（低 API 设备的 java.time 兼容层），
     // App 启动时需调用 AndroidThreeTen.init(this)，见 KRApplication
     implementation("com.jakewharton.threetenabp:threetenabp:1.4.7")
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
+    implementation("io.coil-kt:coil:2.7.0")
+    implementation("io.coil-kt:coil-gif:2.7.0")
+    implementation("io.coil-kt:coil-svg:2.7.0")
+
 }

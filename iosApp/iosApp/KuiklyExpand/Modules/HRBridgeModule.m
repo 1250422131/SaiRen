@@ -28,4 +28,25 @@
     NSLog(@"KuiklyRender:%@", content);
 }
 
+- (void)openLink:(NSDictionary *)args {
+    NSDictionary *params = [args[KR_PARAM_KEY] hr_stringToDictionary];
+    NSString *rawURL = [params[@"url"] stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+    if (rawURL.length == 0) {
+        return;
+    }
+
+    NSString *urlString = [rawURL containsString:@"://"] ? rawURL : [@"https://" stringByAppendingString:rawURL];
+    NSURL *url = [NSURL URLWithString:urlString];
+    if (url == nil) {
+        return;
+    }
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIApplication *application = UIApplication.sharedApplication;
+        if ([application canOpenURL:url]) {
+            [application openURL:url options:@{} completionHandler:nil];
+        }
+    });
+}
+
 @end

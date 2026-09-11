@@ -11,10 +11,15 @@ import kotlinx.serialization.Serializable
 data class SinaKLinePoint(
     /** 时间：分钟级为 "yyyy-MM-dd HH:mm:ss"；日/周/月K 为 "yyyy-MM-dd"（周/月K 取该周期最后一个交易日） */
     val day: String,
+    /** 开盘价 */
     val open: String? = null,
+    /** 最高价 */
     val high: String? = null,
+    /** 最低价 */
     val low: String? = null,
+    /** 收盘价 */
     val close: String? = null,
+    /** 成交量 */
     val volume: String? = null,
 ):SRModel
 

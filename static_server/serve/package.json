@@ -1,0 +1,23 @@
+{
+  "name": "sairen-ai-analysis-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --watch src/index.js",
+    "start": "node --env-file-if-exists=.env src/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.7",
+    "better-sqlite3": "^13.0.3",
+    "drizzle-orm": "^0.45.1",
+    "hono": "^4.11.10",
+    "openai": "^6.30.0",
+    "zod": "^4.3.6"
+  }
+}

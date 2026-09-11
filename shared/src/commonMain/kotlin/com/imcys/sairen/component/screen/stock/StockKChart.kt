@@ -5,6 +5,7 @@ import com.imcys.sairen.component.SREqualTabs
 import com.imcys.sairen.core.chart.KLineLineChart
 import com.imcys.sairen.core.chart.KLineLineChartConfig
 import com.imcys.sairen.core.chart.KLineLinePoint
+import com.imcys.sairen.core.chart.KLineLineSeries
 import com.imcys.sairen.model.StockChartTab
 import com.imcys.sairen.model.stockChartTabList
 import com.tencent.kuikly.core.base.Color
@@ -59,18 +60,20 @@ internal class StockKChartView : ComposeView<StockKChartViewAttr, StockKChartVie
 
             View {
                 attr {
-                    height(220f)
-                    margin(top = 16f, bottom = 16f)
+                    height(ctx.attr.chartHeight)
+                    margin(top = 10f)
                 }
                 KLineLineChart {
                     attr {
-
                         absolutePositionAllZero()
                         points = { ctx.attr.trends() }
+                        additionalLines = { ctx.attr.additionalLines() }
                         config = KLineLineChartConfig(
                             lineColor = Color(0xFF2B7FFF),
                             fillTopColor = Color(0x332B7FFF),
-                            fillBottomColor = Color(0x002B7FFF)
+                            fillBottomColor = Color(0x002B7FFF),
+                            showLegend = true,
+                            primaryLineName = "价格"
                         )
                     }
                 }
@@ -81,7 +84,10 @@ internal class StockKChartView : ComposeView<StockKChartViewAttr, StockKChartVie
 
 
 internal class StockKChartViewAttr : ComposeAttr() {
+    /** 图表容器高度，调用方可按页面空间覆盖。 */
+    var chartHeight: Float = 220f
     var trends: () -> List<KLineLinePoint> = { emptyList() }
+    var additionalLines: () -> List<KLineLineSeries> = { emptyList() }
 }
 
 internal class StockKChartViewEvent : ComposeEvent() {

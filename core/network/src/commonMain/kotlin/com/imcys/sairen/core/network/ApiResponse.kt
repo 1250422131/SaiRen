@@ -13,4 +13,5 @@ import kotlinx.serialization.Transient
 data class ApiResponse<out T>(
     val code: Int = 0,
     val data: T?,
+    val msg: String = "",
 )

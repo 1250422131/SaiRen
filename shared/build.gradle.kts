@@ -59,9 +59,10 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":core:chart"))
-                implementation(project(":core:network"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${Version.getKotlinxSerializationVersion()}")
+                api(project(":core:chart"))
+                api(project(":core:network"))
+                api("org.jetbrains.kotlinx:kotlinx-serialization-core:${Version.getKotlinxSerializationVersion()}")
+                implementation("com.tencent.kuiklybase:KuiklyMarkdown:1.0.6-2.1.21")
 
             }
         }

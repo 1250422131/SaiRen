@@ -7,11 +7,11 @@
         "material": {
           "certpath": "/Users/jieshao/.ohos/config/default_ohosApp_3U0vNekdHFcOl_lw53ZAuzimf_AX5z4FQqfeapE5uj4=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001B89A8580A345D35094455CEF350B3DE9C8E63DB53CE102D7D1622B4E4E11E2F1A4729862136C801",
+          "keyPassword": "0000001BB7FC45902D9A2A32DA5394566F306779C68A2CD87D26B7BF397A4EBEE3D294DB7DF765BC7AE0B7",
           "profile": "/Users/jieshao/.ohos/config/default_ohosApp_3U0vNekdHFcOl_lw53ZAuzimf_AX5z4FQqfeapE5uj4=.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "/Users/jieshao/.ohos/config/default_ohosApp_3U0vNekdHFcOl_lw53ZAuzimf_AX5z4FQqfeapE5uj4=.p12",
-          "storePassword": "0000001BA385F3EF33F4A92F09F13FCE7F64568FBBF37FEEA6319A797A7B5EBBBB6003FE6AADEE1EBFA103"
+          "storePassword": "0000001BF5BD1C61CFEA904108F3FF61EEEC49A672E7E8087424635B51A1007E73E962D4250E1FBF7C4A9A"
         }
       }
     ],
@@ -19,7 +19,7 @@
       {
         "name": "default",
         "signingConfig": "default",
-        "compatibleSdkVersion": "5.0.3(15)",
+        "compatibleSdkVersion": "5.0.0(12)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {

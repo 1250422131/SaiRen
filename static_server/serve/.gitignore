@@ -1,0 +1,6 @@
+node_modules/
+.env
+data/analyses.json
+data/*.db
+data/*.db-shm
+data/*.db-wal

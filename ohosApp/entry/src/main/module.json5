@@ -10,6 +10,11 @@
       "tablet",
       "2in1"
     ],
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.INTERNET"
+      }
+    ],
     "deliveryWithInstall": true,
     "installationFree": false,
     "pages": "$profile:main_pages",
@@ -18,10 +23,11 @@
         "name": "EntryAbility",
         "srcEntry": "./ets/entryability/EntryAbility.ets",
         "description": "$string:EntryAbility_desc",
-        "icon": "$media:icon",
+        "icon": "$media:layered_image",
         "label": "$string:EntryAbility_label",
         "startWindowIcon": "$media:startIcon",
         "startWindowBackground": "$color:start_window_background",
+        "orientation": "auto_rotation_restricted",
         "exported": true,
         "skills": [
           {
@@ -34,12 +40,6 @@
           }
         ]
       }
-    ],
-    "metadata": [
-      {
-        "name": "half_leading",
-        "value": "true",
-      },
-    ],
+    ]
   }
 }

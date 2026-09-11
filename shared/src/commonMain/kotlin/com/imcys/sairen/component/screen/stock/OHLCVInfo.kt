@@ -33,7 +33,6 @@ internal class OHLCVInfoView : ComposeView<OHLCVInfoViewAttr, OHLCVInfoViewEvent
 
     override fun body(): ViewBuilder {
         val ctx = this
-        val colors = ctx.SRThemeColor
         return {
             Row {
                 attr {
@@ -62,7 +61,7 @@ internal class OHLCVInfoView : ComposeView<OHLCVInfoViewAttr, OHLCVInfoViewEvent
                                 priceColor(
                                     price = ctx.attr.details().data?.highestPrice ?: "",
                                     previousClosePrice = ctx.attr.details().data?.previousClosePrice ?: "",
-                                    colors = colors,
+                                    colors = ctx.SRThemeColor,
                                 )
                             )
                         }
@@ -97,7 +96,7 @@ internal class OHLCVInfoView : ComposeView<OHLCVInfoViewAttr, OHLCVInfoViewEvent
                                 priceColor(
                                     price = ctx.attr.details().data?.lowestPrice ?: "",
                                     previousClosePrice = ctx.attr.details().data?.previousClosePrice ?: "",
-                                    colors = colors,
+                                    colors = ctx.SRThemeColor,
                                 )
                             )
                         }
@@ -131,6 +130,29 @@ internal class OHLCVInfoView : ComposeView<OHLCVInfoViewAttr, OHLCVInfoViewEvent
                         }
                     }
                 }
+
+                Column {
+                    attr {
+                        flex(1f)
+                        alignItemsCenter()
+                    }
+                    Text {
+                        attr {
+                            fontSize(16f)
+                            fontWeightBold()
+                            text("换手率")
+                        }
+                    }
+                    Text {
+                        attr {
+                            margin(top = 7f)
+                            fontWeightBold()
+                            text("${ctx.attr.details().data?.turnoverRate}%")
+                            fontSize(14f)
+                        }
+                    }
+                }
+
             }
             View {
                 attr { marginTop(10f) }

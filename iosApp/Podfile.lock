@@ -1,29 +1,46 @@
 PODS:
-  - OpenKuiklyIOSRender (2.7.0)
+  - CocoaLumberjack (3.9.1):
+    - CocoaLumberjack/Core (= 3.9.1)
+  - CocoaLumberjack/Core (3.9.1)
+  - OpenKuiklyIOSRender (2.0.0)
   - SDWebImage (5.21.7):
     - SDWebImage/Core (= 5.21.7)
   - SDWebImage/Core (5.21.7)
   - shared (1.0)
+  - SVGKit (3.0.0):
+    - CocoaLumberjack (~> 3.0)
 
 DEPENDENCIES:
-  - OpenKuiklyIOSRender (~> 2.7.0)
+  - OpenKuiklyIOSRender (from `https://github.com/Tencent-TDS/KuiklyUI.git`, tag `2.25.0`)
   - SDWebImage
   - shared (from `../shared`)
+  - SVGKit
 
 SPEC REPOS:
   trunk:
-    - OpenKuiklyIOSRender
+    - CocoaLumberjack
     - SDWebImage
+    - SVGKit
 
 EXTERNAL SOURCES:
+  OpenKuiklyIOSRender:
+    :git: https://github.com/Tencent-TDS/KuiklyUI.git
+    :tag: 2.25.0
   shared:
     :path: "../shared"
 
+CHECKOUT OPTIONS:
+  OpenKuiklyIOSRender:
+    :git: https://github.com/Tencent-TDS/KuiklyUI.git
+    :tag: 2.25.0
+
 SPEC CHECKSUMS:
-  OpenKuiklyIOSRender: 2e6f7be3adae40f8167bb56a3e6803d1b18fd16e
+  CocoaLumberjack: e4ba3b414dfca8c1916c6303d37f63b3a95134c6
+  OpenKuiklyIOSRender: 0ea7064904d6b4e1fd4d0f3f63b3230dfc1584d0
   SDWebImage: e9fc87c1aab89a8ab1bbd74eba378c6f53be8abf
   shared: 45c4d5a3fe6bf89e105d0ff0f3587f64ad21dd48
+  SVGKit: 1ad7513f8c74d9652f94ed64ddecda1a23864dea
 
-PODFILE CHECKSUM: 10010cf4aa421711ee8f708033a2fae94c987409
+PODFILE CHECKSUM: 27eb4ae7e182357dfc0313a96e4937850cf41b5c
 
 COCOAPODS: 1.16.2

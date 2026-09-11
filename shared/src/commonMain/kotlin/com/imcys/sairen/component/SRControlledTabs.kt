@@ -158,7 +158,6 @@ internal class SRControlledTabsView : ListView<SRControlledTabsAttr, SRControlle
                 ref { this@SRControlledTabsView.indicatorViewRef = it }
                 attr {
                     absolutePosition(top = 0f, left = 0f)
-                    zIndex(-1)
                     visibility(false)
                 }
                 creator.invoke(this)

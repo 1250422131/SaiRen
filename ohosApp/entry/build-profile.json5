@@ -1,15 +1,11 @@
 {
   "apiType": "stageMode",
   "buildOption": {
-    "sourceOption": {
-      "workers": [
-      ],
-    },
     "externalNativeOptions": {
       "path": "./src/main/cpp/CMakeLists.txt",
       "arguments": "",
-      "cppFlags": "",
-    }
+      "cppFlags": ""
+    },
   },
   "buildOptionSet": [
     {
@@ -24,13 +20,20 @@
           }
         }
       },
-      "nativeLib": {
-        "debugSymbol": {
-          "strip": true,
-          "exclude": []
-        }
-      }
+      "nativeLib": {"debugSymbol": {"strip": true}}
     },
+    {
+      "name": "debug",
+      "arkOptions": {
+        "obfuscation": {
+          "ruleOptions": {
+            "enable": false,
+            "files": []
+          }
+        }
+      },
+      "nativeLib": {"debugSymbol": {"strip": false}}
+    }
   ],
   "targets": [
     {

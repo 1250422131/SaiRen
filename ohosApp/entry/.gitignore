@@ -4,4 +4,4 @@
 /build
 /.cxx
 /.test
-oh-package-lock.json5
+/src/main/ets/ts-api/provider.ets

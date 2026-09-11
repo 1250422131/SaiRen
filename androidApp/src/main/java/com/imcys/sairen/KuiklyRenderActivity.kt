@@ -4,12 +4,19 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowInsetsController
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.imcys.sairen.adapter.KRCoilImageAdapter
 import com.tencent.kuikly.core.render.android.IKuiklyRenderExport
+import com.tencent.kuikly.core.render.android.KuiklyRenderView
 import com.tencent.kuikly.core.render.android.adapter.KuiklyRenderAdapterManager
 import com.tencent.kuikly.core.render.android.css.ktx.toMap
 import com.tencent.kuikly.core.render.android.expand.KuiklyRenderViewBaseDelegatorDelegate
@@ -47,6 +54,7 @@ class KuiklyRenderActivity : AppCompatActivity(), KuiklyRenderViewBaseDelegatorD
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_hr)
+        initKuiklyAdapter()
         setupImmersiveMode()
         hrContainerView = findViewById(R.id.hr_container)
         loadingView = findViewById(R.id.hr_loading)
@@ -116,14 +124,101 @@ class KuiklyRenderActivity : AppCompatActivity(), KuiklyRenderViewBaseDelegatorD
     }
 
     private fun setupImmersiveMode() {
-        window?.apply {
-            addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-            window?.statusBarColor = Color.TRANSPARENT
-            decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-                if (!isSystemInNightMode()) View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR else 0
+        setDecorFitsSystemWindows(window)
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Color.TRANSPARENT
+        } else {
+            0x66000000
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val cutoutMode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            } else {
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+            if (window.attributes.layoutInDisplayCutoutMode != cutoutMode) {
+                window.attributes = window.attributes.apply {
+                    layoutInDisplayCutoutMode = cutoutMode
+                }
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isStatusBarContrastEnforced = false
+            window.isNavigationBarContrastEnforced = false
         }
 
+        setSystemBarIconAppearance(window, !isSystemInNightMode())
+    }
+
+    private fun setDecorFitsSystemWindows(window: Window) {
+        if (Build.VERSION.SDK_INT < 35) {
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            } else {
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            }
+            window.decorView.systemUiVisibility = window.decorView.systemUiVisibility or flags
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false)
+        }
+    }
+
+    private fun setSystemBarIconAppearance(window: Window, light: Boolean) {
+        val appearance = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
+            WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.setSystemBarsAppearance(
+                if (light) appearance else 0,
+                appearance,
+            )
+            return
+        }
+
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        var flags = window.decorView.systemUiVisibility
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            flags = if (light) {
+                flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+            } else {
+                flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            flags = if (light) {
+                flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+            } else {
+                flags and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv()
+            }
+        }
+        window.decorView.systemUiVisibility = flags
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP &&
+            kuiklyRenderViewDelegator.onBackPressed()
+        ) {
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
+    private fun initKuiklyAdapter() {
+        with(KuiklyRenderAdapterManager) {
+            krImageAdapter = KRCoilImageAdapter(
+                KRApplication.application,
+                this@KuiklyRenderActivity.lifecycleScope,
+            )
+            krLogAdapter = KRLogAdapter
+            krUncaughtExceptionHandlerAdapter = KRUncaughtExceptionHandlerAdapter
+            krFontAdapter = KRFontAdapter
+            krColorParseAdapter = KRColorParserAdapter(KRApplication.application)
+            krRouterAdapter = KRRouterAdapter
+            krThreadAdapter = KRThreadAdapter()
+        }
     }
 
     companion object {
@@ -133,10 +228,6 @@ class KuiklyRenderActivity : AppCompatActivity(), KuiklyRenderViewBaseDelegatorD
         private const val KEY_IS_NIGHT_MODE = "isNightMode"
         private const val EVENT_THEME_DID_CHANGED = "themeDidChanged"
 
-        init {
-            initKuiklyAdapter()
-        }
-
         fun start(context: Context, pageName: String, pageData: JSONObject) {
             val starter = Intent(context, KuiklyRenderActivity::class.java)
             starter.putExtra(KEY_PAGE_NAME, pageName)
@@ -144,16 +235,5 @@ class KuiklyRenderActivity : AppCompatActivity(), KuiklyRenderViewBaseDelegatorD
             context.startActivity(starter)
         }
 
-        private fun initKuiklyAdapter() {
-            with(KuiklyRenderAdapterManager) {
-                krImageAdapter = KRImageAdapter(KRApplication.application)
-                krLogAdapter = KRLogAdapter
-                krUncaughtExceptionHandlerAdapter = KRUncaughtExceptionHandlerAdapter
-                krFontAdapter = KRFontAdapter
-                krColorParseAdapter = KRColorParserAdapter(KRApplication.application)
-                krRouterAdapter = KRRouterAdapter
-                krThreadAdapter = KRThreadAdapter()
-            }
-        }
     }
 }

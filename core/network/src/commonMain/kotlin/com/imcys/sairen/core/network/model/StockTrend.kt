@@ -8,6 +8,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 /** 东方财富分时接口 `data` 字段的数据模型。 */
+@Deprecated("废除东方财富改新浪")
 @Serializable
 data class StockTrend(
     val code: String,
@@ -25,6 +26,7 @@ data class StockTrend(
  * 时间、开盘价、收盘价、最高价、最低价、成交量、成交额、均价。
  */
 @Serializable(with = StockTrendPointSerializer::class)
+@Deprecated("废除东方财富改新浪")
 data class StockTrendPoint(
     val time: String,
     val openingPrice: Double?,

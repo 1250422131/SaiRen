@@ -8,10 +8,10 @@ struct Index {
       Column() {
         Text(this.message)
           .fontSize(50)
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(FontWeight.Bold);
       }
-      .width('100%')
+      .width('100%');
     }
-    .height('100%')
+    .height('100%');
   }
 }
