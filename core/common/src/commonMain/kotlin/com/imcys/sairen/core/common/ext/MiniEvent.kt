@@ -1,14 +1,16 @@
 package com.imcys.sairen.core.common.ext
 
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
+// 在 Kuikly 线程中按请求所属页面分发，避免多个页面竞争消费同一个 Channel。
+private val loginErrorListeners = mutableMapOf<String, () -> Unit>()
 
-object LoginError
+fun registerLoginErrorListener(pagerId: String, listener: () -> Unit) {
+    loginErrorListeners[pagerId] = listener
+}
 
-// 登录校验异常
-private val _loginErrorChannel = Channel<LoginError>(Channel.UNLIMITED)
-val loginErrorChannel = _loginErrorChannel.receiveAsFlow()
+fun unregisterLoginErrorListener(pagerId: String) {
+    loginErrorListeners.remove(pagerId)
+}
 
-fun sendLoginErrorEvent() {
-    _loginErrorChannel.trySend(LoginError)
+fun sendLoginErrorEvent(pagerId: String) {
+    loginErrorListeners[pagerId]?.invoke()
 }

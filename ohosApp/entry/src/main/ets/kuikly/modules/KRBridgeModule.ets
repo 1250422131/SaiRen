@@ -41,6 +41,7 @@ export class KRBridgeModule extends KuiklyRenderBaseModule {
   static readonly READ_ASSET_FILE_SYNC = 'readAssetFileSync';
   static readonly GET_LOCAL_IMAGE_PATH = 'getLocalImagePath';
   static readonly REQUEST_ORIENTATION = 'requestOrientation';
+  static readonly SET_APP_NIGHT_MODE = 'setAppNightMode';
 
   syncMode(): boolean {
     return false;
@@ -107,6 +108,10 @@ export class KRBridgeModule extends KuiklyRenderBaseModule {
       }
       case KRBridgeModule.REQUEST_ORIENTATION: {
         this.requestOrientation(params);
+        break;
+      }
+      case KRBridgeModule.SET_APP_NIGHT_MODE: {
+        this.setAppNightMode(params);
         break;
       }
       default:
@@ -321,5 +326,15 @@ export class KRBridgeModule extends KuiklyRenderBaseModule {
     //     'localPath': filePath
     //   });
     // });
+  }
+
+  private setAppNightMode(params: KRAny) {
+    try {
+      const records = JSON.parse(params as string) as Record<string, boolean>;
+      const isNightMode = records['isNightMode'] === true;
+      console.info(`KuiklyRender setAppNightMode: ${isNightMode}`);
+    } catch (e) {
+      console.error(`KuiklyRender setAppNightMode params error: ${JSON.stringify(e)}`);
+    }
   }
 }

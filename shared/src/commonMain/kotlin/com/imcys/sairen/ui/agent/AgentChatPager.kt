@@ -1,6 +1,8 @@
 package com.imcys.sairen.ui.agent
 
 import com.imcys.sairen.base.BasePager
+import com.imcys.sairen.core.common.auth.AuthPreferences
+import com.imcys.sairen.core.common.ext.acquireSharedPreferencesModule
 import com.imcys.sairen.component.SRNavigationBar
 import com.imcys.sairen.component.chat.SRChatComposer
 import com.imcys.sairen.component.chat.SRChatMessage
@@ -113,6 +115,10 @@ internal class AgentChatPager : BasePager() {
 
     override fun pageDidAppear() {
         super.pageDidAppear()
+        if (acquireSharedPreferencesModule().getString(AuthPreferences.TOKEN).isBlank()) {
+            requestLogin()
+            return
+        }
         store.dispatch(AgentChatIntent.LoadHistory)
     }
 

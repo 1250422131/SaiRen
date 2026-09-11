@@ -4,7 +4,9 @@ import com.imcys.sairen.component.SRTextView
 import com.imcys.sairen.core.common.ext.acquireBridgeModule
 import com.imcys.sairen.core.common.ext.acquireRouterModule
 import com.imcys.sairen.core.common.ext.acquireSharedPreferencesModule
-import com.imcys.sairen.core.common.ext.loginErrorChannel
+import com.imcys.sairen.core.common.auth.AuthPreferences
+import com.imcys.sairen.core.common.ext.registerLoginErrorListener
+import com.imcys.sairen.core.common.ext.unregisterLoginErrorListener
 import com.imcys.sairen.core.common.module.BridgeModule
 import com.imcys.sairen.theme.SRAppTheme
 import com.imcys.sairen.theme.SRThemeColors
@@ -12,7 +14,6 @@ import com.imcys.sairen.theme.SRThemeConfig
 import com.imcys.sairen.theme.SRThemeMode
 import com.imcys.sairen.theme.SRThemeRuntime
 import com.tencent.kuikly.core.base.ViewConst
-import com.tencent.kuikly.core.coroutines.launch
 import com.tencent.kuikly.core.pager.Pager
 import com.tencent.kuikly.core.pager.IViewCreator
 import com.tencent.kuikly.core.module.Module
@@ -23,6 +24,9 @@ import com.tencent.kuikly.core.reactive.handler.observable
 internal abstract class BasePager : Pager() {
 
     private val appTheme = SRAppTheme.Default
+    private var isPageVisible = false
+    private var loginOpening = false
+    private var loginPending = false
 
     /**
      * 注意：这里必须用 PagerScope.observable(scope) 这一版。
@@ -69,10 +73,11 @@ internal abstract class BasePager : Pager() {
         systemNightMode = pageData.params.optBoolean(IS_NIGHT_MODE_KEY)
         SRThemeRuntime.register(themeChangeListener)
         applyTheme(loadPersistedTheme())
-        bindEvent()
+        registerLoginErrorListener(pagerId, ::requestLogin)
     }
 
     override fun onDestroyPager() {
+        unregisterLoginErrorListener(pagerId)
         SRThemeRuntime.unregister(themeChangeListener)
         super.onDestroyPager()
     }
@@ -82,7 +87,10 @@ internal abstract class BasePager : Pager() {
      */
     override fun pageDidAppear() {
         super.pageDidAppear()
+        isPageVisible = true
+        loginOpening = false
         applyTheme(loadPersistedTheme())
+        if (loginPending) requestLogin()
     }
 
     /** 读取本地主题；异常时回落默认主题，绝不因主题读取失败而影响页面创建 */
@@ -91,14 +99,24 @@ internal abstract class BasePager : Pager() {
             .getOrDefault(SRThemeConfig.Default)
     }
 
-    private fun bindEvent() {
-        lifecycleScope.launch {
-            // 处理登录异常
-            loginErrorChannel.collect {
-                acquireRouterModule().openPage("login")
-                acquireRouterModule().closePage()
-            }
+    override fun pageDidDisappear() {
+        isPageVisible = false
+        super.pageDidDisappear()
+    }
+
+    protected fun requestLogin() {
+        if (pageName == "login" || pageName == "register" || loginOpening) return
+        loginPending = true
+        if (!isPageVisible) return
+        loginPending = false
+        loginOpening = true
+        acquireSharedPreferencesModule().apply {
+            setString(AuthPreferences.TOKEN, "")
+            setString(AuthPreferences.IS_LOGGED_IN, "false")
         }
+        // 先移除触发鉴权失败的页面，再打开登录页，避免登录页返回后回到失效的聊天页。
+        acquireRouterModule().closePage()
+        acquireRouterModule().openPage("login")
     }
 
     override fun themeDidChanged(data: JSONObject) {

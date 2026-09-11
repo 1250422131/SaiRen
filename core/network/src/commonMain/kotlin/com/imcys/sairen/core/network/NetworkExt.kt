@@ -147,8 +147,8 @@ inline fun <reified Body, reified Data> Pager.srRequest(
                             )
                         )
                     } else {
-                        if (responseObject.code == 4001) {
-                            sendLoginErrorEvent()
+                        if (isLoginError(response.statusCode, responseObject.code)) {
+                            sendLoginErrorEvent(pagerId)
                         }
                         trySend(
                             NetWorkResult.Error(
@@ -181,8 +181,8 @@ inline fun <reified Body, reified Data> Pager.srRequest(
                 val responseError = data.optString("msg")
                     .ifBlank { errorResponse?.msg.orEmpty() }
                     .ifBlank { errorMsg }
-                if (dataCode == 4001) {
-                    sendLoginErrorEvent()
+                if (isLoginError(response.statusCode, dataCode)) {
+                    sendLoginErrorEvent(pagerId)
                 }
                 KLog.e(SR_NETWORK_TAG, "请求失败 dataCode=$dataCode url=$url error=$responseError")
                 trySend(

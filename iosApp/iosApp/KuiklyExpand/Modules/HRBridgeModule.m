@@ -49,4 +49,22 @@
     });
 }
 
+- (void)setAppNightMode:(NSDictionary *)args {
+    NSDictionary *params = [args[KR_PARAM_KEY] hr_stringToDictionary];
+    BOOL isNightMode = [params[@"isNightMode"] boolValue];
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIUserInterfaceStyle style = isNightMode
+            ? UIUserInterfaceStyleDark
+            : UIUserInterfaceStyleLight;
+        UIView *rootView = self.hr_rootView;
+        UIViewController *viewController = rootView.window.rootViewController;
+        if (viewController != nil) {
+            viewController.overrideUserInterfaceStyle = style;
+        } else {
+            rootView.overrideUserInterfaceStyle = style;
+        }
+    });
+}
+
 @end
