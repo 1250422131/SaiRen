@@ -50,3 +50,8 @@ Kotlin-js-store
 ## OpenHarmony / DevEco Studio
 /ohosApp/.preview/
 /ohosApp/.arkui-x/
+
+# Generated artifacts
+outputs/
+**/dist/
+ohosApp/dependencies/*.tgz
