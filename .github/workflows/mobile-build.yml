@@ -39,6 +39,8 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: gradle
+      - name: Generate Kotlin Multiplatform dummy framework
+        run: ./gradlew :shared:generateDummyFramework
       - name: Install CocoaPods dependencies
         run: pod install --project-directory=iosApp --deployment
       - name: Archive without code signing
