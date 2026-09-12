@@ -43,22 +43,25 @@ jobs:
         run: ./gradlew :shared:generateDummyFramework
       - name: Install CocoaPods dependencies
         run: pod install --project-directory=iosApp
-      - name: Archive without code signing
+      - name: Build iOS device app without code signing
         run: >-
-          xcodebuild archive
+          xcodebuild build
           -workspace iosApp/iosApp.xcworkspace
           -scheme iosApp
           -configuration Release
           -sdk iphoneos
-          -archivePath iosApp/build/iosApp.xcarchive
+          -derivedDataPath iosApp/build
           CODE_SIGNING_ALLOWED=NO
           CODE_SIGNING_REQUIRED=NO
           CODE_SIGN_IDENTITY=''
       - name: Package unsigned IPA
         run: |
+          set -euo pipefail
           rm -rf iosApp/build/Payload iosApp/build/unsigned
           mkdir -p iosApp/build/Payload iosApp/build/unsigned
-          cp -R iosApp/build/iosApp.xcarchive/Products/Applications/iosApp.app iosApp/build/Payload/
+          app_path=$(find iosApp/build/Build/Products -type d -name 'iosApp.app' -print -quit)
+          test -n "$app_path"
+          cp -R "$app_path" iosApp/build/Payload/SaiRen.app
           ditto -c -k --sequesterRsrc --keepParent iosApp/build/Payload iosApp/build/unsigned/SaiRen-unsigned.ipa
       - uses: actions/upload-artifact@v4
         with:
