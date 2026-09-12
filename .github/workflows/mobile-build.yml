@@ -1,0 +1,65 @@
+name: Mobile builds
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Android debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+      - run: ./gradlew :androidApp:assembleDebug --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sair-en-debug-apk
+          path: androidApp/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+  ios:
+    name: iOS unsigned IPA
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Install CocoaPods dependencies
+        run: pod install --project-directory=iosApp --deployment
+      - name: Archive without code signing
+        run: >-
+          xcodebuild archive
+          -workspace iosApp/iosApp.xcworkspace
+          -scheme iosApp
+          -configuration Release
+          -sdk iphoneos
+          -archivePath iosApp/build/iosApp.xcarchive
+          CODE_SIGNING_ALLOWED=NO
+          CODE_SIGNING_REQUIRED=NO
+          CODE_SIGN_IDENTITY=''
+      - name: Package unsigned IPA
+        run: |
+          rm -rf iosApp/build/Payload iosApp/build/unsigned
+          mkdir -p iosApp/build/Payload iosApp/build/unsigned
+          cp -R iosApp/build/iosApp.xcarchive/Products/Applications/iosApp.app iosApp/build/Payload/
+          ditto -c -k --sequesterRsrc --keepParent iosApp/build/Payload iosApp/build/unsigned/SaiRen-unsigned.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sair-en-unsigned-ipa
+          path: iosApp/build/unsigned/SaiRen-unsigned.ipa
+          if-no-files-found: error
