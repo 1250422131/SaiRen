@@ -42,7 +42,7 @@ jobs:
       - name: Generate Kotlin Multiplatform dummy framework
         run: ./gradlew :shared:generateDummyFramework
       - name: Install CocoaPods dependencies
-        run: pod install --project-directory=iosApp --deployment
+        run: pod install --project-directory=iosApp
       - name: Archive without code signing
         run: >-
           xcodebuild archive
