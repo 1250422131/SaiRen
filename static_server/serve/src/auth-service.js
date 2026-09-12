@@ -20,7 +20,7 @@ export class AuthService {
 
   async register({ username, password }) {
     const normalizedUsername = normalizeUsername(username);
-    if (this.#store.findUserByNormalizedUsername(normalizedUsername)) {
+    if (await this.#store.findUserByNormalizedUsername(normalizedUsername)) {
       throw authError('USERNAME_EXISTS', '用户名已存在。');
     }
 
@@ -38,9 +38,9 @@ export class AuthService {
     };
 
     try {
-      this.#store.createUser(user);
+      await this.#store.createUser(user);
     } catch (error) {
-      if (error?.message?.includes('UNIQUE constraint failed')) {
+      if (error?.message?.includes('UNIQUE constraint failed') || error?.code === '23505' || error?.cause?.code === '23505') {
         throw authError('USERNAME_EXISTS', '用户名已存在。');
       }
       throw error;
@@ -49,26 +49,26 @@ export class AuthService {
   }
 
   async login({ username, password }) {
-    const user = this.#store.findUserByNormalizedUsername(normalizeUsername(username));
+    const user = await this.#store.findUserByNormalizedUsername(normalizeUsername(username));
     if (!user || !(await verifyPassword(password, user.passwordSalt, user.passwordHash))) {
       throw authError('INVALID_CREDENTIALS', '用户名或密码错误。');
     }
     return this.#issueSession(user);
   }
 
-  authenticate(token) {
+  async authenticate(token) {
     if (!token) {
       return null;
     }
-    const user = this.#store.findUserByTokenHash(hashToken(token), new Date().toISOString());
+    const user = await this.#store.findUserByTokenHash(hashToken(token), new Date().toISOString());
     return user ? publicUser(user) : null;
   }
 
-  #issueSession(user) {
+  async #issueSession(user) {
     const token = randomBytes(32).toString('base64url');
     const now = new Date();
     const expiresAt = new Date(now.getTime() + this.#tokenTtlMs);
-    this.#store.createToken({
+    await this.#store.createToken({
       tokenHash: hashToken(token),
       userId: user.id,
       createdAt: now.toISOString(),

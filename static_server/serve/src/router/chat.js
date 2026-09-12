@@ -5,7 +5,7 @@ import { chatService } from '../services.js';
 
 export const chatRouter = new Hono();
 
-chatRouter.get('/history', (context) => {
+chatRouter.get('/history', async (context) => {
   const beforeIdQuery = context.req.query('beforeId');
   const limitQuery = context.req.query('limit');
   const beforeId = parsePositiveInteger(beforeIdQuery);
@@ -14,7 +14,7 @@ chatRouter.get('/history', (context) => {
     return context.json(failure(40020, 'beforeId 必须为正整数。'), 400);
   }
   if (!limit || limit > 100) return context.json(failure(40020, 'limit 必须在 1 到 100 之间。'), 400);
-  return context.json(success(chatService.history(context.get('user').id, { beforeId, limit })));
+  return context.json(success(await chatService.history(context.get('user').id, { beforeId, limit })));
 });
 
 chatRouter.post('/messages', async (context) => {

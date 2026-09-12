@@ -1,5 +1,3 @@
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { AnalysisService } from './analysis-service.js';
 import { AuthService } from './auth-service.js';
 import { createChatGenerator } from './chat-generator.js';
@@ -7,16 +5,11 @@ import { ChatService } from './chat-service.js';
 import { AnalysisStore } from './db/analysis-store.js';
 import { AuthStore } from './db/auth-store.js';
 import { ChatStore } from './db/chat-store.js';
-import { createDatabase } from './db/db.js';
+import { createRuntimeDatabase } from './db/runtime.js';
 import { createDeepSeekGenerator } from './deepseek-generator.js';
 import { createMarketDataProvider, createStockSearchProvider } from './market-data-provider.js';
 
-const databasePath = process.env.DATABASE_PATH
-  ? resolve(process.env.DATABASE_PATH)
-  : fileURLToPath(new URL('../data/sairen.db', import.meta.url));
-const database = createDatabase(databasePath, {
-  legacyJsonPath: fileURLToPath(new URL('../data/analyses.json', import.meta.url)),
-});
+const database = await createRuntimeDatabase();
 const marketDataProvider = createMarketDataProvider({
   timeoutMs: readNumberEnv('MARKET_DATA_TIMEOUT_MS', 15_000),
 });
@@ -31,7 +24,7 @@ export const analysisService = new AnalysisService({
   generator: createDeepSeekGenerator({
     apiKey: process.env.DEEPSEEK_API_KEY,
     baseURL: process.env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com',
-    model: process.env.DEEPSEEK_MODEL ?? 'deepseek-chat',
+    model: process.env.DEEPSEEK_MODEL ?? 'DeepSeek-V4.1-Flash',
     timeout: readNumberEnv('AI_TIMEOUT_MS', 90_000),
   }),
   marketDataProvider,
@@ -44,7 +37,7 @@ export const chatService = new ChatService({
   generator: createChatGenerator({
     apiKey: process.env.DEEPSEEK_API_KEY,
     baseURL: process.env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com',
-    model: process.env.DEEPSEEK_MODEL ?? 'deepseek-chat',
+    model: process.env.DEEPSEEK_MODEL ?? 'DeepSeek-V4.1-Flash',
     timeout: readNumberEnv('AI_TIMEOUT_MS', 90_000),
     marketDataProvider,
     stockSearchProvider: createStockSearchProvider({

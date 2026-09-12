@@ -17,11 +17,11 @@ test('registers, logs in and authenticates a user', async (context) => {
 
   const registered = await service.register({ username: '测试用户', password: 'secret123' });
   assert.equal(registered.user.username, '测试用户');
-  assert.equal(service.authenticate(registered.token).username, '测试用户');
+  assert.equal((await service.authenticate(registered.token)).username, '测试用户');
 
   const loggedIn = await service.login({ username: '测试用户', password: 'secret123' });
   assert.notEqual(loggedIn.token, registered.token);
-  assert.equal(service.authenticate(loggedIn.token).id, registered.user.id);
+  assert.equal((await service.authenticate(loggedIn.token)).id, registered.user.id);
 
   await assert.rejects(
     service.register({ username: '测试用户', password: 'secret123' }),
@@ -31,5 +31,5 @@ test('registers, logs in and authenticates a user', async (context) => {
     service.login({ username: '测试用户', password: 'wrong-password' }),
     { code: 'INVALID_CREDENTIALS' },
   );
-  assert.equal(service.authenticate('invalid-token'), null);
+  assert.equal((await service.authenticate('invalid-token')), null);
 });

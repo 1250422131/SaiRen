@@ -19,13 +19,16 @@ importers:
         version: 13.0.3
       drizzle-orm:
         specifier: ^0.45.1
-        version: 0.45.2(@neondatabase/serverless@1.1.0)(better-sqlite3@13.0.3)
+        version: 0.45.2(@neondatabase/serverless@1.1.0)(better-sqlite3@13.0.3)(postgres@3.4.9)
       hono:
         specifier: ^4.11.10
         version: 4.13.5
       openai:
         specifier: ^6.30.0
         version: 6.49.0(zod@4.4.3)
+      postgres:
+        specifier: ^3.4.7
+        version: 3.4.9
       zod:
         specifier: ^4.3.6
         version: 4.4.3
@@ -166,6 +169,10 @@ packages:
       zod:
         optional: true
 
+  postgres@3.4.9:
+    resolution: {integrity: sha512-GD3qdB0x1z9xgFI6cdRD6xu2Sp2WCOEoe3mtnyB5Ee0XrrL5Pe+e4CCnJrRMnL1zYtRDZmQQVbvOttLnKDLnaw==}
+    engines: {node: '>=12'}
+
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
@@ -181,10 +188,11 @@ snapshots:
     dependencies:
       node-addon-api: 8.9.2
 
-  drizzle-orm@0.45.2(@neondatabase/serverless@1.1.0)(better-sqlite3@13.0.3):
+  drizzle-orm@0.45.2(@neondatabase/serverless@1.1.0)(better-sqlite3@13.0.3)(postgres@3.4.9):
     optionalDependencies:
       '@neondatabase/serverless': 1.1.0
       better-sqlite3: 13.0.3
+      postgres: 3.4.9
 
   hono@4.13.5: {}
 
@@ -193,5 +201,7 @@ snapshots:
   openai@6.49.0(zod@4.4.3):
     optionalDependencies:
       zod: 4.4.3
+
+  postgres@3.4.9: {}
 
   zod@4.4.3: {}

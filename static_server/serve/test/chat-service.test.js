@@ -42,10 +42,10 @@ test('persists multi-content chat messages and paginates history', async (contex
   assert.equal(repeated.repeated, true);
   assert.equal(calls, 1);
 
-  const latest = service.history(session.user.id, { limit: 1 });
+  const latest = await service.history(session.user.id, { limit: 1 });
   assert.equal(latest.messages.length, 1);
   assert.equal(latest.hasMore, true);
-  const previous = service.history(session.user.id, { beforeId: latest.nextBeforeId, limit: 1 });
+  const previous = await service.history(session.user.id, { beforeId: latest.nextBeforeId, limit: 1 });
   assert.equal(previous.messages[0].role, 'user');
   assert.equal(previous.hasMore, false);
 });
@@ -61,7 +61,7 @@ test('marks the assistant message failed when generation fails', async (context)
   const service = new ChatService({ store, generator: async () => { throw new Error('AI unavailable'); } });
 
   await assert.rejects(service.send(session.user.id, { content: '你好' }), /AI unavailable/);
-  const history = service.history(session.user.id, { limit: 10 });
+  const history = await service.history(session.user.id, { limit: 10 });
   assert.equal(history.messages.at(-1).status, 'failed');
   assert.equal(history.messages.at(-1).contents[0].type, 'text');
 });
@@ -85,5 +85,5 @@ test('retry during generation shares the same job and persists only one turn', a
   assert.equal(calls, 1);
   assert.equal(b.repeated, true);
   assert.deepEqual(a.messages, b.messages);
-  assert.equal(service.history(session.user.id, { limit: 10 }).messages.length, 2);
+  assert.equal((await service.history(session.user.id, { limit: 10 })).messages.length, 2);
 });

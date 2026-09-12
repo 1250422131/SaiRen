@@ -17,7 +17,7 @@ export function createDatabase(databasePath, { legacyJsonPath } = {}) {
 
   createSchema(sqlite);
   migrateLegacyJson(db, sqlite, legacyJsonPath);
-  return { db, sqlite };
+  return { db, sqlite, schema, close: () => sqlite.close() };
 }
 
 function createSchema(sqlite) {

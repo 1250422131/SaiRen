@@ -59,3 +59,7 @@ JSON 模式返回空白时，会单独重试一次并关闭 `response_format`，
 - `GET /v1/auth/me`：请求头携带 `Authorization: Bearer <token>`，用于校验登录状态。
 
 用户名长度为 3～32 个字符，只允许文字、数字、下划线和短横线；密码长度为 6～72 个字符。密码使用带随机盐的 scrypt 哈希保存，数据库不保存明文密码；数据库中也只保存 token 的 SHA-256 摘要。token 默认有效期为 30 天，可通过 `AUTH_TOKEN_TTL_SECONDS` 修改。
+
+## Neon 数据库迁移
+
+生产环境使用 `DATABASE_URL` 连接 Neon，并在迁移工具中执行 `migrations/0001_init.sql`。本地开发继续使用 SQLite。

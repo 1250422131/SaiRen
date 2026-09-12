@@ -1,43 +1,45 @@
 import { and, eq, gt } from 'drizzle-orm';
-import { authTokens, users } from './schema.js';
+
 
 export class AuthStore {
   #db;
-  #sqlite;
+  #schema;
+  #close;
 
-  constructor({ db, sqlite }) {
+  constructor({ db, schema, close }) {
     this.#db = db;
-    this.#sqlite = sqlite;
+    this.#schema = schema;
+    this.#close = close;
   }
 
-  findUserByNormalizedUsername(usernameNormalized) {
-    return this.#db.select().from(users)
-      .where(eq(users.usernameNormalized, usernameNormalized)).get() ?? null;
+  async findUserByNormalizedUsername(usernameNormalized) {
+    return (await this.#db.select().from(this.#schema.users)
+      .where(eq(this.#schema.users.usernameNormalized, usernameNormalized)).limit(1))[0] ?? null;
   }
 
-  createUser(user) {
-    this.#db.insert(users).values(user).run();
+  async createUser(user) {
+    await this.#db.insert(this.#schema.users).values(user);
     return user;
   }
 
-  createToken(token) {
-    this.#db.insert(authTokens).values(token).run();
+  async createToken(token) {
+    await this.#db.insert(this.#schema.authTokens).values(token);
   }
 
-  findUserByTokenHash(tokenHash, now) {
-    const row = this.#db.select({ user: users })
-      .from(authTokens)
-      .innerJoin(users, eq(users.id, authTokens.userId))
-      .where(and(eq(authTokens.tokenHash, tokenHash), gt(authTokens.expiresAt, now)))
-      .get();
+  async findUserByTokenHash(tokenHash, now) {
+    const [row] = await this.#db.select({ user: this.#schema.users })
+      .from(this.#schema.authTokens)
+      .innerJoin(this.#schema.users, eq(this.#schema.users.id, this.#schema.authTokens.userId))
+      .where(and(eq(this.#schema.authTokens.tokenHash, tokenHash), gt(this.#schema.authTokens.expiresAt, now)))
+      .limit(1);
     if (!row) return null;
 
-    this.#db.update(authTokens).set({ lastUsedAt: now })
-      .where(eq(authTokens.tokenHash, tokenHash)).run();
+    await this.#db.update(this.#schema.authTokens).set({ lastUsedAt: now })
+      .where(eq(this.#schema.authTokens.tokenHash, tokenHash));
     return row.user;
   }
 
   close() {
-    this.#sqlite.close();
+    return this.#close();
   }
 }

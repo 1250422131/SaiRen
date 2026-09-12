@@ -15,7 +15,7 @@ const isPublicPath = (path) => [
 /** 全局 Bearer 鉴权，业务路由可通过 c.get('user') 获取当前登录用户。 */
 export const authMiddleware = createMiddleware(async (context, next) => {
   if (isPublicPath(context.req.path)) return next();
-  const user = authService.authenticate(readBearerToken(context.req.header('Authorization')));
+  const user = await authService.authenticate(readBearerToken(context.req.header('Authorization')));
   if (!user) return context.json(failure(UNAUTHENTICATED_CODE, '登录状态无效或已过期。'), 401);
   context.set('user', user);
   await next();

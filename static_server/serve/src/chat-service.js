@@ -10,14 +10,14 @@ export class ChatService {
     this.#generator = generator;
   }
 
-  history(userId, options) {
-    const history = this.#store.getHistory(userId, options);
+  async history(userId, options) {
+    const history = await this.#store.getHistory(userId, options);
     return { ...history, messages: history.messages.map(publicMessage) };
   }
 
   async send(userId, { content, requestId = randomUUID() }) {
     const now = new Date().toISOString();
-    const turn = this.#store.createTurn({ userId, requestId, content, now });
+    const turn = await this.#store.createTurn({ userId, requestId, content, now });
     const userMessage = turn.find((message) => message.role === 'user');
     const assistantMessage = turn.find((message) => message.role === 'assistant');
 
@@ -48,11 +48,11 @@ export class ChatService {
 
   async #generate(userId, requestId, content, userMessageId) {
     try {
-      const history = this.#store.getCompletedContext(userId, userMessageId);
+      const history = await this.#store.getCompletedContext(userId, userMessageId);
       const contents = await this.#generator({ history, question: content });
-      return this.#store.completeAssistant(userId, requestId, contents, new Date().toISOString());
+      return await this.#store.completeAssistant(userId, requestId, contents, new Date().toISOString());
     } catch (error) {
-      this.#store.failAssistant(userId, requestId, '暂时无法生成回复，请稍后重试。', new Date().toISOString());
+      await this.#store.failAssistant(userId, requestId, '暂时无法生成回复，请稍后重试。', new Date().toISOString());
       throw error;
     }
   }

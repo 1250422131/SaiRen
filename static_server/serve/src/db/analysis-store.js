@@ -1,41 +1,43 @@
 import { desc, eq } from 'drizzle-orm';
-import { stockAnalyses } from './schema.js';
+
 
 export class AnalysisStore {
   #db;
-  #sqlite;
+  #schema;
+  #close;
 
-  constructor({ db, sqlite }) {
+  constructor({ db, schema, close }) {
     this.#db = db;
-    this.#sqlite = sqlite;
+    this.#schema = schema;
+    this.#close = close;
   }
 
   async getLatest(stockId) {
-    return this.#db.select().from(stockAnalyses)
-      .where(eq(stockAnalyses.stockId, stockId))
-      .orderBy(desc(stockAnalyses.createdAt)).limit(1).get() ?? null;
+    return (await this.#db.select().from(this.#schema.stockAnalyses)
+      .where(eq(this.#schema.stockAnalyses.stockId, stockId))
+      .orderBy(desc(this.#schema.stockAnalyses.createdAt)).limit(1))[0] ?? null;
   }
 
   async create(analysis) {
-    this.#db.insert(stockAnalyses).values(toRow(analysis)).run();
+    await this.#db.insert(this.#schema.stockAnalyses).values(toRow(analysis));
     return analysis;
   }
 
   async deleteByStockId(stockId) {
-    this.#db.delete(stockAnalyses).where(eq(stockAnalyses.stockId, stockId)).run();
+    await this.#db.delete(this.#schema.stockAnalyses).where(eq(this.#schema.stockAnalyses.stockId, stockId));
   }
 
   async update(id, changes) {
-    const current = this.#db.select().from(stockAnalyses).where(eq(stockAnalyses.id, id)).get();
+    const [current] = await this.#db.select().from(this.#schema.stockAnalyses).where(eq(this.#schema.stockAnalyses.id, id)).limit(1);
     if (!current) return null;
 
     const next = { ...current, ...changes };
-    this.#db.update(stockAnalyses).set(toRow(next)).where(eq(stockAnalyses.id, id)).run();
+    await this.#db.update(this.#schema.stockAnalyses).set(toRow(next)).where(eq(this.#schema.stockAnalyses.id, id));
     return next;
   }
 
   close() {
-    this.#sqlite.close();
+    return this.#close();
   }
 }
 
