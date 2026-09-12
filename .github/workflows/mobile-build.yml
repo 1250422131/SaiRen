@@ -59,8 +59,12 @@ jobs:
           set -euo pipefail
           rm -rf iosApp/build/Payload iosApp/build/unsigned
           mkdir -p iosApp/build/Payload iosApp/build/unsigned
-          app_path=$(find iosApp/build/Build/Products -type d -name 'iosApp.app' -print -quit)
-          test -n "$app_path"
+          app_path=$(find iosApp/build -type d -name '*.app' -print -quit)
+          if [ -z "$app_path" ]; then
+            echo 'No .app produced; build tree:'
+            find iosApp/build -maxdepth 5 -print
+            exit 1
+          fi
           cp -R "$app_path" iosApp/build/Payload/SaiRen.app
           ditto -c -k --sequesterRsrc --keepParent iosApp/build/Payload iosApp/build/unsigned/SaiRen-unsigned.ipa
       - uses: actions/upload-artifact@v4
