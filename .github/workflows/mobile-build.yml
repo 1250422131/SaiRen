@@ -25,7 +25,7 @@ jobs:
       - run: ./gradlew :androidApp:assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: sair-en-debug-apk
+          name: SaiRen-debug-apk
           path: androidApp/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
@@ -62,6 +62,6 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent iosApp/build/Payload iosApp/build/unsigned/SaiRen-unsigned.ipa
       - uses: actions/upload-artifact@v4
         with:
-          name: sair-en-unsigned-ipa
+          name: SaiRen-unsigned-ipa
           path: iosApp/build/unsigned/SaiRen-unsigned.ipa
           if-no-files-found: error
