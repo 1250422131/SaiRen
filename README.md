@@ -13,7 +13,9 @@ SaiRen 是一个面向股票行情与 AI 分析场景的跨端应用示例。项
 已对Android、IOS、鸿蒙平台进行测试。
 
 ### 视频
-等待制作中........
+[SaiRen 演示视频（约 10 MB）](https://drive.misakamoe.com/d/TB_drive/BILIShared/2026/%E8%A7%86%E9%A2%91/SaiRen%E6%BC%94%E7%A4%BA.mp4)
+
+该链接用于下载预览视频。由于跨域限制，浏览器中可能无法直接在线播放；如无法播放，请点击链接下载后观看。
 
 ## 项目简介
 

@@ -104,15 +104,6 @@ export function createChatGenerator({ apiKey, baseURL, model, timeout, marketDat
             throw error;
           }
           const contents = hydrateContents(parsed.data.contents, stocks);
-          const missingAdvice = /怎么样|如何|分析|建议|买|卖|操作|点位|持有|减仓|加仓/.test(question)
-            ? [...stocks.entries()].filter(([id]) => !parsed.data.contents.some((item) =>
-              item.type === 'stock_trade_timing' && `${item.stock.marketCode}.${item.stock.code}` === id))
-            : [];
-          if (missingAdvice.length) {
-            if (!repairing) throw new Error('缺少买入卖出点位建议卡片，每只已查询股票都需要 stock_trade_timing。');
-            const fallbackCards = missingAdvice.slice(0, 4).map(([, data]) => buildFallbackTradeAdvice(data));
-            return [...contents.slice(0, 8 - fallbackCards.length), ...fallbackCards];
-          }
           if (stocks.size && !hasAdvice(contents)) {
             if (!repairing) throw new Error('股票回答缺少文字解读或买卖建议，不能只返回行情图表。');
             return [buildFallbackAdvice(stocks), ...contents.slice(0, 7)];
