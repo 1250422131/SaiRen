@@ -5,6 +5,9 @@
 SaiRen 是一个面向股票行情与 AI 分析场景的跨端应用示例。项目使用 Kotlin Multiplatform + Kuikly 共享业务与界面代码，同时提供 Android、iOS、H5、微信小程序和 OpenHarmony 端实现。应用支持行情浏览、股票搜索、股票详情、AI 对话、K 线展示、公司资料和个性化设置。
 
 ## 预览
+
+[下载 SaiRen 1.0 Android 安装包（APK）](https://drive.misakamoe.com/d/TB_drive/BILIShared/2026/APK/SaiRen_1.0.apk)，无需编译，下载后可直接在 Android 设备上安装体验。
+
 ![页面预览](docs/asstes/pages_preview.png)
 
 ### 多平台
